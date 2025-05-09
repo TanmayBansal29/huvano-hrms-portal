@@ -6,10 +6,8 @@ const connectDB = require("./config/database")
 const app = express()
 app.use(express.json())
 
-app.get("/", (req, res) => {
-    res.end("Hello World")
-})
 
+// Connection to Database and Starting the server
 connectDB().then(() => {
     console.log("Database Connection Established")
     app.listen(process.env.PORT, () => {
