@@ -1,55 +1,62 @@
-const otpVerification = (otp) => {
+exports.resetPasswordTemplate = (name, resetLink) => {
     return `<!DOCTYPE html>
     <html>
     
     <head>
         <meta charset="UTF-8">
-        <title>OTP Verification Email</title>
+        <title>Password Reset Request</title>
         <style>
-            body{
+            body {
                 background-color: #ffffff;
                 font-family: Arial, sans-serif;
                 font-size: 16px;
                 line-height: 1.4;
                 color: #333333;
                 margin: 0;
-                padding:0;
+                padding: 0;
             }
-            
-            .container{
-                max-width:600px;
+
+            .container {
+                max-width: 600px;
                 margin: 0 auto;
                 padding: 20px;
                 text-align: center;
             }
-                
-            .logo{
+
+            .logo {
                 max-width: 200px;
                 margin-bottom: 20px;
             }
-                
-            .message{
+
+            .message {
                 font-size: 18px;
                 font-weight: bold;
                 margin-bottom: 20px;
             }
-                
-            .body{
-                font-size: 16px;
-				margin-bottom: 20px;
-            }
 
-            h2.highlight {
-                font-weight: bold;
-                margin: 20px 0;
-                font-size: 28px;
-                color: #000;
+            .body {
+                font-size: 16px;
+                margin-bottom: 20px;
             }
 
             .support {
                 font-size: 14px;
                 color: #999999;
                 margin-top: 20px;
+            }
+
+            .highlight {
+                font-weight: bold;
+            }
+
+            .button {
+                display: inline-block;
+                background-color: #007BFF;
+                color: #ffffff;
+                padding: 12px 20px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-top: 10px;
             }
 
             .thanks {
@@ -66,22 +73,23 @@ const otpVerification = (otp) => {
                 text-align: left;
             }
         </style>
+    
     </head>
     
     <body>
         <div class="container">
-            <div class="message">OTP Verification Email</div>
+            <div class="message">Password Reset Request</div>
             <div class="body">
-                <p>Dear User,</p>
-                <p>Thank you for registering with Huvano. To complete your registration, please use the following OTP
-                    (One Time Password) to verify your account:</p>
-                <h2 class="highlight">${otp}</h2>
-                <p>The OTP is valid for 5 minutes. If you did not request this verification, Please discard this email
-                Once your account is Verified, you will have access to your Candidate Dashboard</p>
+                <p>Hi ${name},</p>
+                <p>We received a request to reset the password for your account. If you made this request, click the button below to reset your password:</p>
+                <a href="${resetLink}" class="button">Reset Password</a>
+                <p>If you did not request this, please ignore this email or contact us to secure your account.</p>
+                <p>This link will expire in 10 minutes for your security.</p>
             </div>
             <div class="support">If you have any questions or need further assistance, please feel free to reach out to us at
                 <a href="mailto:info@huvanohrms.com">info@huvanohrms.com</a>. We're happy to help!
             </div>
+
             <div class="thanks">
                 <p>Thanks,<br>
                 <span class="team">Huvano HRMS Team</span></p>
@@ -89,7 +97,5 @@ const otpVerification = (otp) => {
         </div>
     </body>
     
-    </html>`
-}
-
-module.exports = otpVerification
+    </html>`;
+};

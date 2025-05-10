@@ -1,11 +1,25 @@
 const mongoose = require("mongoose")
 const express = require("express")
-require("dotenv")
+const candidateRoutes = require("./routes/Candidate")
+require("dotenv").config()
 const connectDB = require("./config/database")
+const cookieParser = require("cookie-parser")
+const cors = require("cors")
 
 const app = express()
-app.use(express.json())
 
+// Middlewares
+app.use(express.json())
+app.use(cookieParser())
+app.use(
+    cors({
+        origin: "http://localhost:4000",
+        credentials: true
+    })
+)
+
+// Routes
+app.use("/api/v1/auth", candidateRoutes)
 
 // Connection to Database and Starting the server
 connectDB().then(() => {
@@ -15,4 +29,12 @@ connectDB().then(() => {
     })
 }).catch((err) => {
     console.log("Failed to Connect to Database", err)
+})
+
+// Default Route
+app.get("/", (req, res) => {
+    return res.json({
+        success: true,
+        message: "Server is up and running...."
+    })
 })
