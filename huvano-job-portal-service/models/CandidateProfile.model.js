@@ -1,7 +1,12 @@
 const mongoose = require("mongoose")
 
 const candidateProfileSchema = mongoose.Schema({
-    name: {
+    firstName: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    lastName: {
         type: String,
         required: true,
         trim: true
@@ -14,13 +19,15 @@ const candidateProfileSchema = mongoose.Schema({
     password: {
         type: String
     },
+    image: {
+        type: String,
+        required: true,
+    },
     applications: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Application"
-    },
-    createdAt: {
-        type: Date
     }
-})
+}, { timestamps: true })
 
-module.exports = mongoose.model("CandidateProfile", candidateProfileSchema)
+const CandidateProfile = mongoose.model("CandidateProfile", candidateProfileSchema)
+module.exports = CandidateProfile
