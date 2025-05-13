@@ -1,14 +1,14 @@
 const jwt = require("jsonwebtoken")
 
 // auth middleware that verifies whether the jwt token is valid or not
-exports.auth = async (req, res) => {
+exports.auth = async (req, res, next) => {
     try {
         // Extract the token
-        const token = res.cookies.token || req.body.token || req.header("Authorisation").replace("Bearer", "")
+        const token = res.cookies?.token || req.body?.token || req.header("Authorization").replace("Bearer", "")
 
         // Check - 1 If token is missing or not
         if(!token){
-            return res.status(400).json({
+            return res.status(401).json({
                 success: false,
                 message: "Token in Missing"
             })
@@ -18,13 +18,13 @@ exports.auth = async (req, res) => {
         try {
             const decode = jwt.verify(token, process.env.JWT_SECRET)
             req.user = decode
+            next();
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                message: "Token is Invalid"
+                message: "Token is Invalid or Expired"
             })
         }
-        next();
         
     } catch (error) {
         return res.status(401).json({
@@ -32,4 +32,25 @@ exports.auth = async (req, res) => {
             message: "Something went wrong while validating the token"
         })
     }
+}
+
+// Middleware to check whether the login data is of HR or candidate as per the route
+exports.isHR = (req, res, next) => {
+    if(res.user?.role != "HR"){
+        return res.status(403).json({
+            success: false,
+            message: "Access Denied: HR Only"
+        })
+    }
+    next();
+}
+
+exports.isCandidate = (req, res, next) => {
+    if(res.user?.role != "Candidate"){
+        return res.status(403).json({
+            success: false,
+            message: "Access Denied: Candidate Only"
+        })
+    }
+    next();
 }

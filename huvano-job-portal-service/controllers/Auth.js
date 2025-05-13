@@ -38,7 +38,7 @@ exports.signup = async(req, res) => {
         // Check - 3: Whether User already exists in DB or not
         const existingUser = await CandidateProfile.findOne({email})
         if(existingUser) {
-            res.send(400).json({
+            res.status(400).json({
                 success: false,
                 message: "User Already Exists. Please login to continue"
             })
@@ -46,16 +46,16 @@ exports.signup = async(req, res) => {
 
         // Finding the most recent otp sent to the user
         const response = await OTP.findOne({email}).sort({createdAt: -1}).limit(1)
-        console.log(response)
+        console.log("Recent OTP Candidate Controller", response)
         if(response.length == 0) {
             // OTP not found for the Email
-            return res.send(400).json({
+            return res.status(400).json({
                 success: false,
                 message: "OTP is invalid"
             })
         } else if (otp != response[0].otp) {
             // OTP is not same
-            return res.send(400).json({
+            return res.status(400).json({
                 success: false,
                 message: "OTP is invalid or Expired"
             })
@@ -116,7 +116,7 @@ exports.login = async(req, res) => {
             const token = jwt.sign(
                 { email: user.email, id: user._id },
                 process.env.JWT_SECRET,
-                { expiresIn: "24h" }
+                { expiresIn: "4h" }
             );
 
             // Set Cookie for token and return success response

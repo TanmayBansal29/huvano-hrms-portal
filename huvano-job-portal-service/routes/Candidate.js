@@ -5,7 +5,7 @@ const router = express.Router()
 const {signup, login, logout, sendotp, resendOtp, changePassword} = require("../controllers/Auth")
 const {forgotPassword, resetPassword} = require("../controllers/ForgotPassword")
 
-const {auth} = require("../middlewares/auth")
+const {auth, isCandidate} = require("../middlewares/auth")
 
 // Route for user signup
 router.post("/signup", signup)
@@ -23,7 +23,7 @@ router.post("/send-otp", sendotp)
 router.post("/resend-otp", resendOtp)
 
 // Route for Changing the password
-router.post("/change-password", auth, changePassword)
+router.post("/change-password", auth, isCandidate, changePassword)
 
 // Route for forgot password - Generating Reset Password Token
 router.post("/forgot-password", forgotPassword)

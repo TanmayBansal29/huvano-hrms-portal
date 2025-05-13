@@ -1,28 +1,29 @@
 const mongoose = require("mongoose")
 const validator = require("validator")
 
-const candidateProfileSchema = mongoose.Schema({
+const hrSchema = mongoose.Schema({
     firstName: {
         type: String,
         required: true,
         trim: true,
-        minlength: 2,
-        maxlength: 50
+        minLength: 2,
+        maxLength: 50
     },
     lastName: {
         type: String,
         required: true,
         trim: true,
-        minlength: 2,
-        maxlength: 50
+        minLength: 2,
+        maxLength: 50
     },
-    emailAddress: {
+    email: {
         type: String,
         required: true,
+        trim: true,
         unique: true,
         lowercase: true,
-        validate(value) {
-            if(!validator.isEmail(value)) {
+        validate(value){
+            if(!validator.isEmail(value)){
                 throw new Error ("Invalid Email")
             }
         }
@@ -31,25 +32,32 @@ const candidateProfileSchema = mongoose.Schema({
         type: String,
         required: true,
         validate: {
-            validator: function(value) {
+            validator: function (value){
                 return validator.isStrongPassword(value, {
                     minLength: 8,
                     minLowercase: 1,
-                    minUppercase: 1,
                     minNumbers: 1,
-                    minSymbols: 1
+                    minSymbols: 1,
+                    minUppercase: 1,
                 })
             },
-            message: "Password must be at least 8 character long and include uppercase, lowercase, number and symbol"
+            message: "Password must be at least 8 characters long and include uppercase, lowercase, number and symbol"
         }
     },
+    designation: {
+        type: String,
+        required: true,
+        trim: true,
+        minLength: 2,
+        maxLength: 100
+    },
+    jobPosts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "JobPost"
+    }],
     image: {
         type: String,
     },
-    applications: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Application"
-    }],
     resetPasswordToken: {
         type: String
     }, 
@@ -58,10 +66,10 @@ const candidateProfileSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        default: "Candidate",
-        enum: ["Candidate"]
+        default: "HR",
+        enum: ["HR"]
     }
-}, { timestamps: true })
+}, {timestamps: true})
 
-const CandidateProfile = mongoose.model("CandidateProfile", candidateProfileSchema)
-module.exports = CandidateProfile
+const HRProfile = mongoose.model("HR", hrSchema)
+module.exports = HRProfile

@@ -10,20 +10,25 @@ const jobPostSchema = mongoose.Schema({
     },
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minLength: 5,
+        maxLength: 100
     },
-    location: {
+    location: [{
         type: String,
-        required: true
-    },
+        required: true,
+        trim: true,
+        enum: ["Bangalore", "Hyderabad", "Chennai", "Gurgaon", "Noida", "Pan India", "Kolkata", "Delhi", "Remote", "Ahmedabad"]
+    }],
     experienceLevel: {
         type: String,
-        enum: ["Intern","0-2", "1-3", "3-6", "7+"],
+        enum: ["Intern","0-2", "3-5", "6-8", "8+"],
         required: true
     },
     positionType: {
         type: String,
-        enum: ["Full Time", "Part Time"],
+        enum: ["Full Time", "Part Time", "Intenship"],
         required: true
     },
     salary: {
@@ -33,29 +38,40 @@ const jobPostSchema = mongoose.Schema({
     },
     educationLevel: {
         type: String,
-        enum: ["Graduation", "Post Graduation"],
+        enum: ["Graduation", "Post Graduation", "Diploma", "PHD", "None"],
     },
     jobDescription: {
         type: String,
         minLength: 100,
-        maxLength: 500
+        maxLength: 500,
+        required: true,
+        trim: true
     },
     rolesAndResponsibilities: {
         type: String,
         minLength: 100,
-        maxLength: 500
+        maxLength: 500,
+        required: true,
+        trim: true
     },
     skillsRequired: {
         type: String,
         minLength: 100,
-        maxLength: 500
+        maxLength: 500,
+        required: true,
+        trim: true
     },
-    createdAt: {
-        type: Date
+    postedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "HR",
+        required: true
     },
-    updatedAt: {
-        type: Date
+    status: {
+        type: String,
+        enum: ["Active", "Closed", "Archieved"],
+        default: "Active"
     }
-})
+}, { timestamps: true })
 
-module.exports = mongoose.model("JobPost", jobPostSchema)
+const JobPost = mongoose.model("JobPost", jobPostSchema)
+module.exports = JobPost

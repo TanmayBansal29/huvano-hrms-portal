@@ -1,6 +1,8 @@
 const mongoose = require("mongoose")
 const express = require("express")
 const candidateRoutes = require("./routes/Candidate")
+const HRRoutes = require("./routes/HR")
+const JobPostRoutes = require("./routes/JobPost")
 require("dotenv").config()
 const connectDB = require("./config/database")
 const cookieParser = require("cookie-parser")
@@ -20,6 +22,8 @@ app.use(
 
 // Routes
 app.use("/api/v1/auth", candidateRoutes)
+app.use("/api/v1/auth/HR", HRRoutes)
+app.use("/api/v1/job", JobPostRoutes)
 
 // Connection to Database and Starting the server
 connectDB().then(() => {
