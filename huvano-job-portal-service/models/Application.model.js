@@ -3,27 +3,43 @@ const mongoose = require("mongoose")
 const applicationSchema = mongoose.Schema({
     candidate: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "CandidateProfile"
+        ref: "CandidateProfile",
+        required: true
     },
     job: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "JobPost"
+        ref: "JobPost",
+        required: true
     },
     resumeUrl: {
         type: String,
-        required: true
+        required: true,
+        validate:{
+            validator: function (v) {
+                return /^https?:\/\/.+\.(pdf|docx?|PDF|DOCX?)$/.test(v);
+            },
+            message: props => `${props.value} is not a valid resume file URL (must end with .pdf, .doc, or .docx)`
+        }
     },
     phoneNumber: {
         type: Number,
-        required: true
+        required: true,
+        validate: {
+            validator: function (v) {
+                return /^\+?[0-9]{10,15}$/.test(v);
+            },
+            message: props => `${props.value} is not a valid phone number`
+        }
     },
     address: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Address"
+        ref: "Address",
+        required: true
     },
     educationDetails: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "EducationDetails"
+        ref: "EducationDetails",
+        required: true
     },
     previousEmployment: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -36,7 +52,13 @@ const applicationSchema = mongoose.Schema({
     noticePeriod: {
         type: Number,
         min: 0,
-        max: 120
+        max: 120,
+        validate: {
+            validator : function (v) {
+                return this.joinImmediately ? v === 0 : true
+            },
+            message: "Notice period should be 0 if the candidate can join immediately"
+        }
     },
     openForRelocation: {
         type: Boolean,
@@ -71,8 +93,7 @@ const applicationSchema = mongoose.Schema({
         feedback: {
             type: String,
             minLength: 50,
-            maxLength: 200,
-            required: false
+            maxLength: 200
         },
         result: {
             type: String,
@@ -82,7 +103,13 @@ const applicationSchema = mongoose.Schema({
     }],
     finalOffer: {
         offerLetterUrl: {
-            type: String
+            type: String,
+            validate: {
+                validator: function (v) {
+                    return !v || /^https?:\/\/.+$/.test(v);
+                },
+                message: props => `${props.value} is not a valid offer letter URL`
+            } 
         },
         offeredOn: {
             type: Date
@@ -91,7 +118,15 @@ const applicationSchema = mongoose.Schema({
             type: Boolean,
             default: false
         },
-        acceptedOn: Date
+        acceptedOn: {
+            type: Date,
+            validate: {
+                validator: function (v) {
+                    return !this.accepted || !!v;
+                },
+                message: "Should be shown if accepted is true"
+            }
+        }
     },
     requestedInterviewChanges: [{
         requestedDate: {
@@ -109,3 +144,6 @@ const applicationSchema = mongoose.Schema({
         }
     }]
 }, { timestamps: true })
+
+const ApplicationModel = mongoose.model("ApplicationModel", applicationSchema)
+module.exports = ApplicationModel
