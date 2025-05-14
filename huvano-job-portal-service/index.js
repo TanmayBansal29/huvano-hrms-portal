@@ -3,6 +3,7 @@ const express = require("express")
 const candidateRoutes = require("./routes/Candidate")
 const HRRoutes = require("./routes/HR")
 const JobPostRoutes = require("./routes/JobPost")
+const CandidateJobPostsRoutes = require("./routes/JobCandidate")
 require("dotenv").config()
 const connectDB = require("./config/database")
 const cookieParser = require("cookie-parser")
@@ -24,6 +25,7 @@ app.use(
 app.use("/api/v1/auth", candidateRoutes)
 app.use("/api/v1/auth/HR", HRRoutes)
 app.use("/api/v1/job", JobPostRoutes)
+app.use("/api/v1/jobPosts", CandidateJobPostsRoutes)
 
 // Connection to Database and Starting the server
 connectDB().then(() => {
