@@ -218,3 +218,44 @@ exports.getJobPostById = async (req, res) => {
         })
     }
 }
+
+// Controller for marking a job post status closed/Archieved
+exports.closeJobPost = async (req, res) => {
+    try {
+        const jobId = req.params.jobId
+
+        // Checking if jobId exists or not
+        const job = await JobPost.findOne({jobId})
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job Post does not exists"
+            })
+        }
+
+        const {status} = req.body
+        if(!["Active", "Closed", "Archived"].includes(status)){
+            return res.status(400).json({
+                success: false,
+                message: "Status is not valid"
+            })
+        }
+
+        job.status = status
+        await job.save()
+
+        return res.status(200).json({
+            success: false,
+            message: "Status Changed Successfully",
+            updatedStatus: job.status
+        })
+
+    } catch (error) {
+        console.log("Error while changing the status Job Post: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong changing the status. Please try again"
+        })
+    }
+}
+

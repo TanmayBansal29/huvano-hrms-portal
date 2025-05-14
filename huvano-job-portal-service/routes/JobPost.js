@@ -2,7 +2,7 @@ const express = require("express")
 const router = express.Router()
 
 // Importing important controllers and middlewares to create the jobpost routes
-const {createJobPost, updateJobPost, deletejobPost, getJobPostsByHR, getJobPostById} =  require("../controllers/JobPost")
+const {createJobPost, updateJobPost, deletejobPost, getJobPostsByHR, getJobPostById, closeJobPost} =  require("../controllers/JobPost")
 const { auth, isHR } = require("../middlewares/auth")
 
 
@@ -19,6 +19,9 @@ router.delete("/delete/jobPost/:jobId", auth, isHR, deletejobPost)
 router.get("/hr/jobs", auth, isHR, getJobPostsByHR)
 
 // Router for getting the job post by jobId
-router.get("/job/:jobId", getJobPostById)
+router.get("/job/:jobId", auth, isHR, getJobPostById)
+
+// Router for changing the status of the job post
+router.patch("/job/changeStatus/:jobId", auth, isHR, closeJobPost)
 
 module.exports = router
