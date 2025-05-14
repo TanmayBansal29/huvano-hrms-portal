@@ -43,3 +43,32 @@ exports.getJobPosts = async (req, res) => {
         })
     }
 }
+
+// Controller for getting the specific job post with jobID
+exports.getJobPostByID = async(req, res) => {
+    try {
+        // Getting the jobId from req params
+        const jobId = req.params.jobId
+
+        // Checking whether job exists or not
+        const job = await JobPost.findOne({jobId})
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job Post does not exists"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Job Post Fetched Successfully",
+            job
+        })
+    } catch (error) {
+        console.log("Error while fetching job post details based on jobID: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "job details cannot be fetched. Please try again"
+        })
+    }
+}
