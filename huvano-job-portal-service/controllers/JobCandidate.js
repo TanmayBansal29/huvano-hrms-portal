@@ -72,3 +72,5 @@ exports.getJobPostByID = async(req, res) => {
         })
     }
 }
+
+// Controller for applying to Job

@@ -4,19 +4,30 @@ const addressSchema = mongoose.Schema({
     houseAddress: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        minlength: 5,
+        maxlength: 100
     },
     city: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 50
     },
     state: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 50
     },
     country: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 50
     },
     postalCode: {
         type: String,
