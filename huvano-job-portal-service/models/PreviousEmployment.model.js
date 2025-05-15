@@ -4,7 +4,8 @@ const previousEmployerSchema = mongoose.Schema({
     companyName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        minLength: 2
     },
     position: {
         type: String,
@@ -25,10 +26,31 @@ const previousEmployerSchema = mongoose.Schema({
     endMonth: {
         type: String,
         enum: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        validate: {
+            validator: function (v) {
+                if(this.currentlyWorking) return true;
+                return v != null
+            },
+            message: "End Month is required if not currently working"
+        }
     },
     endYear: {
         type: Number,
-        min: 1970,
+        validate:[
+            {
+                validator: function (v) {
+                if(this.currentlyWorking) return true;
+                return v != null
+                },
+                message: "End Month is required if not currently working"
+            },
+            {
+                validator: function (v) {
+                    if(this.currentlyWorking) return true;
+                    return !this.startYear || v >= this.startYear
+                },
+                message: "End Year must be greater that or equal to start year"
+        }],
         max: new Date().getFullYear(),
     },
     currentlyWorking: {

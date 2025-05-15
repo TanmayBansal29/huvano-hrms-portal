@@ -15,7 +15,12 @@ const educationDetailsSchema = mongoose.Schema({
         },
         endYear: {
             type: Number,
-            min: 1971,
+            validate: {
+              validator: function (v) {
+                return v >= this.startYear
+              },
+              message: "End Year must be greater than or equal to start year"  
+            },
             max: new Date().getFullYear(),
             required: true
         },
@@ -28,7 +33,8 @@ const educationDetailsSchema = mongoose.Schema({
         schoolName: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            minLength: 3
         }
     },
     higherSecondaryEducation: {
@@ -49,7 +55,12 @@ const educationDetailsSchema = mongoose.Schema({
         },
         endYear: {
             type: Number,
-            min: 1971,
+            validate: {
+              validator: function (v) {
+                return v >= this.startYear
+              },
+              message: "End Year must be greater than or equal to start year"  
+            },
             max: new Date().getFullYear(),
             required: true
         },
@@ -62,7 +73,8 @@ const educationDetailsSchema = mongoose.Schema({
         schoolName: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            minLength: 3
         }
     },
     graduationDetails: {
@@ -82,7 +94,12 @@ const educationDetailsSchema = mongoose.Schema({
         },
         endYear: {
             type: Number,
-            min: 1970,
+            validate: {
+              validator: function (v) {
+                return v >= this.startYear
+              },
+              message: "End Year must be greater than or equal to start year"  
+            },
             max: new Date().getFullYear(),
             required: true
         },
@@ -95,7 +112,8 @@ const educationDetailsSchema = mongoose.Schema({
         universityName: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            minLength: 3
         }
     },
     postGraduationDetails: {
@@ -112,7 +130,12 @@ const educationDetailsSchema = mongoose.Schema({
         },
         endYear: {
             type: Number,
-            min: 1970,
+            validate: {
+              validator: function (v) {
+                return v >= this.startYear
+              },
+              message: "End Year must be greater than or equal to start year"  
+            },
             max: new Date().getFullYear(),
         },
         cgpaObtained: {
@@ -122,6 +145,7 @@ const educationDetailsSchema = mongoose.Schema({
         },
         universityName: {
             type: String,
+            minLength: 3
         }
     }
 }, { timestamps: true })
