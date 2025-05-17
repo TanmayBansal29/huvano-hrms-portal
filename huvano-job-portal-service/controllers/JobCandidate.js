@@ -123,6 +123,58 @@ exports.saveJobs = async (req, res) => {
     }
 }
 
+// Controller to get all the saved jobs
+exports.getSavedJobs = async (req, res) => {
+    try {
+        const {page = 1, limit = 10} = req.query
+        const pageNum = parseInt(page, 10)
+        const limitNum = parseInt(limit, 10)
+
+        if(isNaN(pageNum) || isNaN(limitNum || pageNum < 1 || limitNum < 1)){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Pagination Parameters"
+            })
+        }
+        const skip = (pageNum-1)*limitNum
+        const candidateId = req.user?._id
+        const candidate = await CandidateProfile.findById(candidateId).lean()
+        if(!candidate) {
+            return res.status(404).json({
+                success: false,
+                message: "Candidate Not Found"
+            })
+        }
+
+        const totalSaved = candidate.savedJobs?.length || 0
+        const paginatedIds = candidate.savedJobs?.slice(skip, skip + limitNum)
+
+        if(!paginatedIds || paginatedIds.length === 0){
+            return res.status(404).json({
+                success: false,
+                message: "No Saved Job Found"
+            })
+        }
+
+        const savedJobs = await JobPost.find({_id: {$in: paginatedIds}})
+        return res.status(200).json({
+            success: true,
+            message: "Saved Jobs Fetched Successfully",
+            savedJobs,
+            total: totalSaved,
+            page: pageNum,
+            limit: limitNum
+        })
+
+    } catch (error) {
+        console.log("Error while fetching saved jobs", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong fetching saved jobs. Please try again"
+        })
+    }
+}
+
 // Controller for applying to Job
 exports.applytoJob = async (req, res) => {
     try {
