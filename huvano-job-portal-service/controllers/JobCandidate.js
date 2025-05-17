@@ -243,3 +243,78 @@ exports.applytoJob = async (req, res) => {
         })
     }
 }
+
+// Controller to fetch all the applications on candidate dashboard
+exports.getApplications = async (req, res) => {
+    try {
+        const candidateId = req.user?._id
+        const candidate = await CandidateProfile.findById(candidateId)
+        if(!candidate) {
+            return res.status(400).json({
+                success: false,
+                message: "Candidate doesn't Exists. Please Register First"
+            })
+        }
+
+        const applications = await ApplicationModel.find({candidateId}).populate("jobId")
+        if(applications.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No Applications for Candidate"
+            })
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Applications Fetched Successfully",
+            applications
+        })
+
+    } catch (error) {
+        console.log("Error While fetching the applications: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong fetching the applications. Please try again"
+        })
+    }
+}
+
+// Controller to fetch a particular application using the application ID
+exports.getParticularApplication = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId
+        const candidateId = req.user?._id
+
+        const candidate = await CandidateProfile.findById(candidateId)
+        if(!candidate){
+            return res.status(404).json({
+                success: false,
+                message: "Candidate does not exists"
+            })
+        }
+
+        const application = await ApplicationModel.findOne({
+            _id: applicationId,
+            candidateId
+        }).populate("jobId")
+
+        if(!application){
+            return res.status(404).json({
+                success: false,
+                message: "You haven't applied for this job. Please apply first"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Application Fetched successfully",
+            application
+        })
+
+    } catch (error) {
+        console.log("Error fetching the application: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong fetching the application. Please try again"
+        })
+    }
+}
