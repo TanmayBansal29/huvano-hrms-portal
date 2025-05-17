@@ -84,7 +84,7 @@ exports.saveJobs = async (req, res) => {
         const candidateId = req.user?._id
         const jobId = req.params.jobId
 
-        const job = await JobPost.findById(jobId)
+        const job = await JobPost.findOne({jobId})
         if(!job) {
             return res.status(404).json({
                 success: false,
@@ -181,7 +181,7 @@ exports.unsaveJob = async (req, res) => {
         const candidateId = req.user?._id
         const jobId = req.params.jobId
 
-        const job = await JobPost.findById(jobId)
+        const job = await JobPost.findOne({jobId})
         if(!job) {
             return res.status(404).json({
                 success: false,

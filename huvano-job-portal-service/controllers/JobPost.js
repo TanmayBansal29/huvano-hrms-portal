@@ -1,3 +1,5 @@
+const ApplicationModel = require("../models/Application.model");
+const HRProfile = require("../models/Hr.model");
 const JobPost = require("../models/JobPost.model");
 const { validateJobPostInput } = require("../utils/jobPostValidator");
 
@@ -258,4 +260,72 @@ exports.closeJobPost = async (req, res) => {
         })
     }
 }
+
+// Controller for showing all the apis to HR for a particular JobID
+exports.getAllApplications = async (req, res) => {
+    try {
+        const jobId = req.params.jobId
+        const hrId = req.user._id
+        const {page = 1, limit = 10} = req.query
+        const pageNum = parseInt(page, 10)
+        const limitNum = parseInt(limit, 10)
+
+        if(isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Pagination Credentials"
+            })
+        }
+
+        const skip = (pageNum - 1) * limitNum
+
+        const hr = await HRProfile.findById(hrId)
+        if(!hr) {
+            return res.status(404).json({
+                success: false,
+                message: "No HR Found"
+            })
+        }
+
+        if(String(job.hrId) !== String(hrId)) {
+            return res.status(403).json({
+                success: false,
+                message:"You are not authorized to access applications for this job"
+            })
+        }
+        const job = await JobPost.findOne({jobId})
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "No Job Found"
+            })
+        }
+
+        const applications = await ApplicationModel.find({jobId}).skip(skip).limit(limitNum)
+        if(applications.length === 0){
+            return res.status(404).json({
+                success: false,
+                message: "No Application found for JobId: " + jobId
+            })
+        }
+
+        const totalApplications = await ApplicationModel.countDocuments({jobId})
+        return res.status(200).json({
+            success: true,
+            message: "Applications Fetched Successfully",
+            currentPage: pageNum,
+            totalApplications,
+            totalPages: Math.ceil(totalApplications/limitNum),
+            applications
+        })
+
+    } catch (error) {
+        console.log("Error Fetching all the applications: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong Fetching the applications. Please try again"
+        })
+    }
+}
+
 
