@@ -1,3 +1,4 @@
+const CandidateProfile = require("../models/CandidateProfile.model");
 const JobPost = require("../models/JobPost.model")
 
 
@@ -74,3 +75,36 @@ exports.getJobPostByID = async(req, res) => {
 }
 
 // Controller for applying to Job
+exports.applytoJob = async (req, res) => {
+    try {
+        // Getting jobID from req.params
+        const jobId = req.params.jobId
+        
+        // Checking where job exists or not
+        const job = await JobPost.findOne({jobId})
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job doesn't exists"
+            })
+        }
+
+        // Getting user from req.user
+        const candidateId = req.user._id
+        // Checking whether candidate exists or not
+        const candidate = await CandidateProfile.findById(candidateId)
+        if(!candidate) {
+            return res.status(404).json({
+                success: false,
+                message: "Candidate Details Not found"
+            })
+        }
+
+    } catch (error) {
+        console.log("Error while applying to job: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong applying to job. Please try again"
+        })
+    }
+}
