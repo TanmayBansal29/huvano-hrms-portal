@@ -46,9 +46,9 @@ const candidateProfileSchema = mongoose.Schema({
     image: {
         type: String,
     },
-    applications: [{
+    savedJobs: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Application"
+        ref: "JobPost"
     }],
     resetPasswordToken: {
         type: String

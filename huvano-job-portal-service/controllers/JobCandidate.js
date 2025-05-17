@@ -78,6 +78,51 @@ exports.getJobPostByID = async(req, res) => {
     }
 }
 
+// Controller to save the Jobs shown on the portal
+exports.saveJobs = async (req, res) => {
+    try {
+        const candidateId = req.user?._id
+        const jobId = req.params.jobId
+
+        const job = await JobPost.findById(jobId)
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "No Job Found"
+            })
+        }
+
+        const candidate = await CandidateProfile.findById(candidateId)
+        if(!candidate) {
+            return res.status(404).json({
+                success: false,
+                message: "No Candidate Found"
+            })
+        }
+
+        if(candidate.savedJobs.includes(jobId)){
+            return res.status(400).json({
+                success: false,
+                message: "Job Already Saved"
+            })
+        }
+
+        candidate.savedJobs.push(jobId)
+        await candidate.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "Job Saved Successfully"
+        })
+    } catch (error) {
+        console.log("Error while saving the job: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong saving the job, Please try again"
+        })
+    }
+}
+
 // Controller for applying to Job
 exports.applytoJob = async (req, res) => {
     try {
@@ -360,4 +405,3 @@ exports.withdrawApplication = async(req, res) => {
         })
     }
 }
-
