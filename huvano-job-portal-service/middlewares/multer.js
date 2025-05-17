@@ -1,16 +1,7 @@
 const multer = require("multer");
 
 // Local storage just to pass file to cloudinary
-const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, "uploads/")
-    },
-    filename: function(req, file, cb) {
-        const ext = file.originalname.split('.').pop();
-        const uniqueName = `${file.fieldname}-${Date.now()}.${ext}`
-        cb(null, uniqueName);
-    }
-});
+const storage = multer.memoryStorage()
 
 // Creating the filter for the file types allowed (pdf, doc, docx)
 const fileFilter = (req, file, cb) => {

@@ -100,6 +100,10 @@ exports.applytoJob = async (req, res) => {
             })
         }
 
+        
+        const {myInformation, myEducation, myExperience, applicationQuestions, voluntaryQuestions} = req.body
+
+
     } catch (error) {
         console.log("Error while applying to job: ", error)
         return res.status(500).json({
