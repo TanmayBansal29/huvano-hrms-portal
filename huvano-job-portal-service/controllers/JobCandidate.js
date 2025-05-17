@@ -318,3 +318,46 @@ exports.getParticularApplication = async (req, res) => {
         })
     }
 }
+
+// Controller to withdraw the application
+exports.withdrawApplication = async(req, res) => {
+    try {
+        const applicationId = req.params.applicationId
+        const candidateId = req.user?._id
+
+        const candidate = await CandidateProfile.findById(candidateId)
+        if(!candidate){
+            return res.status(404).json({
+                success: false,
+                message: "No Candidate found"
+            })
+        }
+
+        const application = await ApplicationModel.findOne({
+            _id: applicationId,
+            candidateId
+        })
+        if(!application) {
+            return res.status(404).json({
+                success: false,
+                message: "Application Not found"
+            })
+        }
+
+        application.status = "Withdrawn";
+        await application.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Application Withdrawn Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error While Withdrawing the application: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong withdrawing the application. Please try again"
+        })
+    }
+}
+
