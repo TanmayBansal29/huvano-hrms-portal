@@ -2,6 +2,14 @@ const mongoose = require("mongoose");
 const validator = require("validator")
 
 const applicationSchema = mongoose.Schema({
+    candidateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CandidateProfile"
+    },
+    jobId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "JobPost"
+    },
     resumeUrl: {
         type: String,
         required: true,
@@ -88,7 +96,7 @@ const applicationSchema = mongoose.Schema({
         },
         hearAboutUs: {
             type: String,
-            enum: ["Glassdoor", "Linkedin", "Indeed", "Naukri", "Social Media", "University", "Career Fair", "Careers Page"],
+            enum: ["Glassdoor", "Linkedin", "Indeed", "Naukri", "Social Media", "University", "Career Fair", "Careers Page", "Others"],
             required: true
         },
         formerEmployee: {
@@ -156,13 +164,13 @@ const applicationSchema = mongoose.Schema({
             trim: true,
             minlength: 3,
         },
-        startYear: {
+        fromYear: {
             type: Number,
             min: 1970,
             max: new Date().getFullYear(),
             required: true
         },
-        endYear: {
+        toYear: {
             type: Number,
             validate:[
             {
@@ -170,32 +178,29 @@ const applicationSchema = mongoose.Schema({
                 if(this.currentlyWorking) return true;
                 return v != null
                 },
-                message: "End Month is required if not currently working"
+                message: "To Year is required if not currently working"
             },
             {
                 validator: function (v) {
                     if(this.currentlyWorking) return true;
                     return !this.startYear || v >= this.startYear
                 },
-                message: "End Year must be greater that or equal to start year"
+                message: "To Year must be greater that or equal to from year"
             }],
             max: 2100,
             required: true
         },
         currentlyWorking: {
-            type: Boolean,
-            required: true
+            type: Boolean
         },
         roleDescription: {
             type: String,
-            required: true,
             trim: true,
             minLength: 50,
             maxLength: 250
         },
         noticePeriod: {
             type: Number,
-            required: true,
             validate: {
                 validator: function (v) {
                     if(this.currentlyWorking) return v != null;
