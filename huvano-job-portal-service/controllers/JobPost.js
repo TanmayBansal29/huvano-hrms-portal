@@ -701,3 +701,51 @@ exports.cancelInterview = async (req, res) => {
         })
     }
 }
+
+// Controller to get all the interview scheduled
+exports.getAllInterviews = async (req, res) => {
+    try {
+        const hrId = req.user._id
+        const hr = await HRProfile.findById(hrId)
+
+        const {page=1, limit=10} = req.query
+        const pageNum = parseInt(page, 10)
+        const limitNum = parseInt(limit, 10)
+
+        if(isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Pagination Values"
+            })
+        }
+
+        const skip = (pageNum - 1) * limitNum
+
+        if(!hr){
+            return res.status(404).json({
+                success: false,
+                message: "HR Not Found"
+            })
+        }
+
+        const interviews = await InterviewModel.find({hrId}).skip(skip).limit(limitNum)
+        const totalInterview = await InterviewModel.countDocuments({hrId})
+
+        return res.status(200).json({
+            success: true,
+            message: interviews.length === 0 ? "No Interviews Found" : "Interviews Data fetched successfully",
+            totalInterview,
+            currentPage: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(totalInterview / limitNum),
+            data: interviews
+        })
+
+    } catch (error) {
+        console.log("Error fetching all the interview: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong fetching interview details. Please try again"
+        })
+    }
+}
