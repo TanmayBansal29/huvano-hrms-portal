@@ -329,3 +329,53 @@ exports.getAllApplications = async (req, res) => {
 }
 
 
+// Controller for getting a particular application
+exports.getApplicationById = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId
+        const hrId = req.user?._id
+
+        const hr = await HRProfile.findById(hrId)
+        if(!hr){
+            return res.status(404).json({
+                success: false,
+                message: "HR default not found"
+            })
+        }
+
+        const application = await ApplicationModel.findById(applicationId).populate("jobId")
+        if(!application){
+            return res.status(404).json({
+                success: false,
+                message: "No Application Found"
+            })
+        }
+
+        if(String(application.jobId.createdBy) !== String(hrId)){
+            return res.status(403).json({
+                success: false,
+                message: "You are not authorized to access this application"
+            })
+        }
+
+        if(application.status === 'Withdrawn'){
+            return res.status(400).json({
+                success: false,
+                message: "The application was withdrawn by the candidate and is no longer active"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Application fetched successfully",
+            application
+        })
+
+    } catch (error) {
+        console.log("Error while fetching particular Application: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong fetching the application. Please try again"
+        })
+    }
+}
