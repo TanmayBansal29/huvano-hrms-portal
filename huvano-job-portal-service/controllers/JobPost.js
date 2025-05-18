@@ -1,3 +1,4 @@
+const { interviewInvitationEmail } = require("../mails/interviewInvitation");
 const { applicationRejected } = require("../mails/rejectionNotification");
 const { applicationShortlisted } = require("../mails/shortlistingNotification");
 const { applicationUnderReview } = require("../mails/underReviewNotification");
@@ -492,3 +493,112 @@ exports.updateApplicationStatus = async (req, res) => {
         })
     }
 }
+
+// Controller for scheduling the interview
+exports.scheduleInterview = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId
+        const hrId = req.user._id
+
+        const hr = await HRProfile.findById(hrId)
+        if(!hr) {
+            return res.status(404).json({
+                success: false,
+                message: "HR not found"
+            })
+        }
+
+        const application = await ApplicationModel.findById(applicationId).populate("jobId")
+        if(!application){
+            return res.status(404).json({
+                success: false,
+                message: "Application not found"
+            })
+        }
+
+        if(String(application.jobId.createdBy) !== String(hrId)) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized to schedule the interview"
+            })
+        }
+
+        if(!(application.status === 'Shortlisted' || application.status === 'Interviewing')){
+            return res.status(400).json({
+                success: false,
+                message: "Not Shortlisted for the Interview so far"
+            })
+        }
+
+        const {interviewRounds} = req.body
+        const {roundNumber, scheduledAt, mode, linkOrLocation} = interviewRounds
+
+        if(!roundNumber || !scheduledAt || !mode || !linkOrLocation){
+            return res.status(400).json({
+                success: false,
+                message: "Please fill all the details"
+            })
+        }
+        
+        const allowedModes = ["Online", "In-Person"]
+        if(!allowedModes.includes(mode)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please Enter a valid value from options"
+            })
+        }
+
+        const newStatus = "Interviewing"
+        if(application.status === "Shortlisted"){
+            application.status = newStatus
+        }
+
+        application.interviewRounds.push({roundNumber, scheduledAt, mode, linkOrLocation})
+        await application.save()
+
+        const latestRound = application.interviewRounds[application.interviewRounds.length - 1];
+        const formattedDate = new Date(scheduledAt).toLocaleString("en-IN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+        try {
+            const emailResponse = await mailSender(
+                application.myInformation.emailAddress,
+                'Interview Invitation',
+                interviewInvitationEmail(
+                    application.myInformation.firstName,
+                    application.jobId.title,
+                    "Huvano HRMS",
+                    formattedDate,
+                    latestRound.mode,
+                    latestRound.linkOrLocation
+                )
+            )
+            console.log("Email Response|| Interview Invitation: ", emailResponse)
+            
+        } catch (error) {
+            console.log("Error while sending invitation mail", error)
+            return res.status(400).json({
+                success: false,
+                message: "Something went wrong sending the mail. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Interview Scheduled Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while Scheduling Interview: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while scheduling the interview. Please try again"
+        })
+    }
+} 
