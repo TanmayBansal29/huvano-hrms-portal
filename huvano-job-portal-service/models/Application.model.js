@@ -275,7 +275,7 @@ const applicationSchema = mongoose.Schema({
     },
     applicationStatus: {
         type: String,
-        enum: ["Pending", "Shortlisted", "Rejected", "Interviewing", "Offered", "Hired", "Declined", "Withdrawn"],
+        enum: ["Pending", "Shortlisted", "Rejected", "Under Review", "Interviewing", "Offered", "Hired", "Declined", "Withdrawn"],
         default: "Pending"
     },
     interviewRounds: [{

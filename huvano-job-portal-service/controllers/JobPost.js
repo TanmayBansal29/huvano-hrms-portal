@@ -1,7 +1,11 @@
+const { applicationRejected } = require("../mails/rejectionNotification");
+const { applicationShortlisted } = require("../mails/shortlistingNotification");
+const { applicationUnderReview } = require("../mails/underReviewNotification");
 const ApplicationModel = require("../models/Application.model");
 const HRProfile = require("../models/Hr.model");
 const JobPost = require("../models/JobPost.model");
 const { validateJobPostInput } = require("../utils/jobPostValidator");
+const mailSender = require("../utils/mailSender");
 
 // Controller for creating a Job Post
 exports.createJob = async (req, res) => {
@@ -376,6 +380,115 @@ exports.getApplicationById = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong fetching the application. Please try again"
+        })
+    }
+}
+
+// Controller to update the status of the application
+exports.updateApplicationStatus = async (req, res) => {
+    try {
+        const applicationId = req.params.applicationId
+        const hrId = req.user?._id
+        const hr = await HRProfile.findById(hrId)
+        if(!hr){
+            return res.status(404).json({
+                success: false,
+                message: "HR not found"
+            })
+        }
+
+        const application = await ApplicationModel.findById(applicationId).populate("jobId")
+        if(!application) {
+            return res.status(404).json({
+                success: false,
+                message: "Application Not Found"
+            })
+        }
+
+        if(String(application.jobId.createdBy) !== String(hrId)){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized to change the status"
+            })
+        }
+
+        if(application.status === 'Withdrawn'){
+            return res.status(400).json({
+                success: false,
+                message: "The application was withdrawn by the candidate and is no longer active"
+            })
+        }
+
+        const allowedStatus = ["Shortlisted", "Rejected", "Under Review"]
+        const newStatus = req.body.status
+        if(!allowedStatus.includes(newStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please select a valid status from options"
+            })
+        }
+
+        application.status = newStatus
+        await application.save()
+
+        try {
+            if(newStatus === 'Shortlisted'){
+                const emailResponse = await mailSender(
+                    application.myInformation.emailAddress,
+                    "Update on your Application",
+                    applicationShortlisted(
+                        application.myInformation.firstName,
+                        application.jobId.title,
+                        "Huvano HRMS"
+                    )
+                )
+                console.log("Shortlisted Email Response: ", emailResponse)
+            }
+
+            if(newStatus === 'Rejected'){
+                const emailResponse = await mailSender(
+                    application.myInformation.emailAddress,
+                    "Update on your Application",
+                    applicationRejected(
+                        application.myInformation.firstName,
+                        application.jobId.title,
+                        "Huvano HRMS"
+                    )
+                )
+                console.log("Rejected Email Response: ", emailResponse)
+            }
+
+            if(newStatus === 'Under Review'){
+                const emailResponse = await mailSender(
+                    application.myInformation.emailAddress,
+                    "Update on your Application",
+                    applicationUnderReview(
+                        application.myInformation.firstName,
+                        application.jobId.title,
+                        "Huvano HRMS"
+                    )
+                )
+                console.log("Under Review Email Response: ", emailResponse)
+            }
+        } catch (error) {
+            console.log("Error Sending Update Status Email: ", error)
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the mail",
+                error: error.message
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Status Updated Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while updating the status: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while updating the status. Please try again"
         })
     }
 }

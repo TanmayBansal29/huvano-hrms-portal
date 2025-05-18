@@ -1,10 +1,10 @@
-exports.applicationRejected = (candidateName, jobTitle, companyName) => {
+exports.applicationUnderReview = (candidateName, jobTitle, companyName) => {
 	return `<!DOCTYPE html>
     <html>
     
     <head>
         <meta charset="UTF-8">
-        <title>Application Update</title>
+        <title>Application Under Review</title>
         <style>
             body {
                 background-color: #ffffff;
@@ -25,7 +25,7 @@ exports.applicationRejected = (candidateName, jobTitle, companyName) => {
                 font-size: 20px;
                 font-weight: bold;
                 margin-bottom: 20px;
-                color: #e60000;
+                color: #0073e6;
             }
             .body {
                 font-size: 16px;
@@ -57,19 +57,19 @@ exports.applicationRejected = (candidateName, jobTitle, companyName) => {
     
     <body>
         <div class="container">
-            <div class="message">Application Status: Rejected</div>
+            <div class="message">Application Under Review</div>
             <div class="body">
                 <p>Hi ${candidateName},</p>
-                <p>We appreciate your interest in the <span class="highlight">${jobTitle}</span> role at <span class="highlight">${companyName}</span>.</p>
-                <p>After careful consideration, we regret to inform you that your profile has not been shortlisted for the next round.</p>
-                <p>We encourage you to apply for other opportunities with us in the future.</p>
+                <p>Thank you for applying for the position of <span class="highlight">${jobTitle}</span> at <span class="highlight">${companyName}</span>.</p>
+                <p>Your application is currently under review by our hiring team.</p>
+                <p>We appreciate your patience and will get back to you as soon as we have an update.</p>
             </div>
             <div class="support">
                 If you have any questions, feel free to reach out to us at 
                 <a href="mailto:info@huvanohrms.com">info@huvanohrms.com</a>. We're here to help!
             </div>
             <div class="thanks">
-                <p>Best wishes,<br>
+                <p>Warm regards,<br>
                 <span class="team">Huvano HRMS Team</span></p>
             </div>
         </div>
