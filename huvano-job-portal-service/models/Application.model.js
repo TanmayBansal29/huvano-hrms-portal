@@ -278,38 +278,12 @@ const applicationSchema = mongoose.Schema({
         enum: ["Pending", "Shortlisted", "Rejected", "Under Review", "Interviewing", "Offered", "Hired", "Declined", "Withdrawn"],
         default: "Pending"
     },
-    interviewRounds: [{
-        roundNumber: {
-            type: Number,
-            min: 1,
-            max: 10
-        },
-        scheduledAt: {
-            type: Date,
-        },
-        mode: {
-            type: String,
-            enum: ["Online", "In-Person"]
-        },
-        linkOrLocation: {
-            type: String,
-        },
-        status: {
-            type: String,
-            enum: ["Scheduled", "Completed", "Rescheduled", "Cancelled"],
-            default: "Scheduled"
-        },
-        feedback: {
-            type: String,
-            minLength: 50,
-            maxLength: 200
-        },
-        result: {
-            type: String,
-            enum: ["Pending", "Selected", "Rejected"],
-            default: "Pending"
+    interviews: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Interview"
         }
-    }],
+    ],
     finalOffer: {
         offerLetterUrl: {
             type: String,

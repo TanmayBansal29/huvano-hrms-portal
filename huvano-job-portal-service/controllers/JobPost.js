@@ -580,7 +580,7 @@ exports.scheduleInterview = async (req, res) => {
                 )
             )
             console.log("Email Response|| Interview Invitation: ", emailResponse)
-            
+
         } catch (error) {
             console.log("Error while sending invitation mail", error)
             return res.status(400).json({
@@ -602,3 +602,15 @@ exports.scheduleInterview = async (req, res) => {
         })
     }
 } 
+
+exports.cancelInterview = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        console.log("Error while cancelling the interview: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong cancelling the interview. Please try again"
+        })
+    }
+}
