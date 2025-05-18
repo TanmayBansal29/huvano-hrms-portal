@@ -40,6 +40,10 @@ const interviewSchema = mongoose.Schema({
         type: String,
         enum: ["Pending", "Selected", "Rejected"],
         default: "Pending"
+    },
+    hrId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "HRProfile"
     }
 }, {timestamps: true})
 

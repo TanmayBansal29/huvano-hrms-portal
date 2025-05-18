@@ -1,3 +1,4 @@
+const { interviewCancellationEmail } = require("../mails/interviewCancellationEmail");
 const { interviewInvitationEmail } = require("../mails/interviewInvitation");
 const { applicationRejected } = require("../mails/rejectionNotification");
 const { applicationShortlisted } = require("../mails/shortlistingNotification");
@@ -555,7 +556,8 @@ exports.scheduleInterview = async (req, res) => {
             roundNumber,
             scheduledAt: formattedDate,
             mode,
-            linkOrLocation
+            linkOrLocation,
+            hrId: hrId
         });
 
         if(application.status === "Shortlisted"){
@@ -603,8 +605,93 @@ exports.scheduleInterview = async (req, res) => {
     }
 } 
 
+// Controller to cancel the interviews
 exports.cancelInterview = async (req, res) => {
     try {
+        const interviewId = req.params.interviewId
+        const hrId = req.user?.hrId
+
+        const hr = await HRProfile.findById(hrId)
+        if(!hr) {
+            return res.status(404).json({
+                success: false,
+                message: "HR Not Found"
+            })
+        }
+
+        const interview = await InterviewModel.findById(interviewId).populate({
+            path: "application",
+            populate: {
+                path: "jobId",
+                select: "title"
+            }
+        })
+
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "Interview Not found"
+            })
+        }
+
+        if(String(interview.hrId) !== String(hrId)){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized to perform this action"
+            })
+        }
+
+        if(interview.status === "Cancelled"){
+            return res.status(400).json({
+                success: false,
+                message: "Interview Already Cancelled"
+            })
+        }
+
+        interview.status = "Cancelled"
+        await interview.save()
+
+        const application = interview.application
+        const candidateName = application?.myInformation?.firstName || "Candidate";
+        const email = application?.myInformation?.emailAddress;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Candidate email not found"
+            });
+        }
+        const jobTitle = application?.jobId?.title || "a role"
+        const interviewDateTime = interview.scheduledAt.toLocaleString();
+        const interviewMode = interview.mode
+
+        try {
+            const emailResponse = await mailSender(
+                email,
+                "Interview Invivation Update - Cancelled",
+                interviewCancellationEmail(
+                    candidateName,
+                    jobTitle,
+                    "Huvano HRMS",
+                    interviewDateTime,
+                    interviewMode,
+                    "unforeseen reasons"
+                )
+            )
+
+            console.log("Email Response || Interview Cancelled: ", emailResponse)
+
+        } catch (error) {
+            console.log("Error while sending Interview Cancellation Mail")
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending interview cancellation mail. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Interview Cancelled Successfully"
+        })
 
     } catch (error) {
         console.log("Error while cancelling the interview: ", error)
