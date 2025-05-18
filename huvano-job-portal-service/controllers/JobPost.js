@@ -708,7 +708,7 @@ exports.getAllInterviews = async (req, res) => {
         const hrId = req.user._id
         const hr = await HRProfile.findById(hrId)
 
-        const {page=1, limit=10} = req.query
+        const {page=1, limit=10, startDate, endDate} = req.query
         const pageNum = parseInt(page, 10)
         const limitNum = parseInt(limit, 10)
 
@@ -719,16 +719,22 @@ exports.getAllInterviews = async (req, res) => {
             })
         }
 
-        const skip = (pageNum - 1) * limitNum
-
         if(!hr){
             return res.status(404).json({
                 success: false,
                 message: "HR Not Found"
             })
         }
+        const skip = (pageNum - 1) * limitNum
 
-        const interviews = await InterviewModel.find({hrId}).skip(skip).limit(limitNum)
+        let filter = {hrId}
+        if(startDate || endDate) {
+            filter.scheduledAt = {};
+            if(startDate) filter.scheduledAt.$gte = new Date(startDate)
+            if(endDate) filter.scheduledAt.$lte = new Date(endDate)
+        }
+        
+        const interviews = await InterviewModel.find({hrId}).skip(skip).limit(limitNum).sort({scheduledAt: 1})
         const totalInterview = await InterviewModel.countDocuments({hrId})
 
         return res.status(200).json({
