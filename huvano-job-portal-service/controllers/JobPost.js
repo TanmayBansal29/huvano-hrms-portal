@@ -4,6 +4,7 @@ const { applicationShortlisted } = require("../mails/shortlistingNotification");
 const { applicationUnderReview } = require("../mails/underReviewNotification");
 const ApplicationModel = require("../models/Application.model");
 const HRProfile = require("../models/Hr.model");
+const InterviewModel = require("../models/Interview.model");
 const JobPost = require("../models/JobPost.model");
 const { validateJobPostInput } = require("../utils/jobPostValidator");
 const mailSender = require("../utils/mailSender");
@@ -530,8 +531,7 @@ exports.scheduleInterview = async (req, res) => {
             })
         }
 
-        const {interviewRounds} = req.body
-        const {roundNumber, scheduledAt, mode, linkOrLocation} = interviewRounds
+        const {roundNumber, scheduledAt, mode, linkOrLocation} = req.body
 
         if(!roundNumber || !scheduledAt || !mode || !linkOrLocation){
             return res.status(400).json({
@@ -548,23 +548,22 @@ exports.scheduleInterview = async (req, res) => {
             })
         }
 
-        const newStatus = "Interviewing"
+        const formattedDate = new Date(scheduledAt);
+
+        const newInterview = await InterviewModel.create({
+            application: application._id,
+            roundNumber,
+            scheduledAt: formattedDate,
+            mode,
+            linkOrLocation
+        });
+
         if(application.status === "Shortlisted"){
-            application.status = newStatus
+            application.status = "Interviewing"
         }
 
-        application.interviewRounds.push({roundNumber, scheduledAt, mode, linkOrLocation})
+        application.interviews.push(newInterview._id)
         await application.save()
-
-        const latestRound = application.interviewRounds[application.interviewRounds.length - 1];
-        const formattedDate = new Date(scheduledAt).toLocaleString("en-IN", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
 
         try {
             const emailResponse = await mailSender(
@@ -575,8 +574,8 @@ exports.scheduleInterview = async (req, res) => {
                     application.jobId.title,
                     "Huvano HRMS",
                     formattedDate,
-                    latestRound.mode,
-                    latestRound.linkOrLocation
+                    mode,
+                    linkOrLocation
                 )
             )
             console.log("Email Response|| Interview Invitation: ", emailResponse)
@@ -591,7 +590,8 @@ exports.scheduleInterview = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Interview Scheduled Successfully"
+            message: "Interview Scheduled Successfully",
+            interview: newInterview
         })
 
     } catch (error) {
@@ -605,7 +605,7 @@ exports.scheduleInterview = async (req, res) => {
 
 exports.cancelInterview = async (req, res) => {
     try {
-        
+
     } catch (error) {
         console.log("Error while cancelling the interview: ", error)
         return res.status(500).json({
