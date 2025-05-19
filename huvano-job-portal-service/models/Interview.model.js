@@ -47,7 +47,8 @@ const interviewSchema = mongoose.Schema({
     },
     response: {
         type: String,
-        enum: ["Accept", "Decline", "Reschedule"]
+        enum: ["Pending" ,"Accept", "Decline", "Reschedule"],
+        default: "Pending"
     },
     rescheduleRequest: {
         type: String,

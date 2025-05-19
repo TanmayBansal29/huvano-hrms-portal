@@ -710,3 +710,12 @@ exports.updateResponse = async (req, res) => {
         })
     }
 }
+
+// Controller to request for rescheduling the interview invite
+exports.requestReschedule = async (req, res) => {
+    try {
+
+    } catch (error) {
+        console.log("Error")
+    }
+}
