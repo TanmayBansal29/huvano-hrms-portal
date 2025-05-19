@@ -5,6 +5,8 @@ const applicationSubmitted = require("../mails/jobApplicationConfirmation")
 const { myInformationValidator, myEducationValidator, myExperienceValidator, applicationQuestionsValidator, voluntaryQuestionsValidator } = require("../utils/applicationValidator");
 const ApplicationModel = require("../models/Application.model");
 const mailSender = require("../utils/mailSender");
+const InterviewModel = require("../models/Interview.model");
+const { populate } = require("dotenv");
 
 // Controller for getting all the Job Posts for Candidate to go through
 exports.getJobPosts = async (req, res) => {
@@ -503,6 +505,85 @@ exports.withdrawApplication = async(req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong withdrawing the application. Please try again"
+        })
+    }
+}
+
+// Controller to get the interview details
+exports.getInterviewDetails = async (req, res) => {
+    try {
+        const candidateId = req.user._id
+        const candidate = await CandidateProfile.findById(candidateId).select("_id")
+
+        if(!candidate){
+            return res.status(404).json({
+                success: false,
+                message: "Candidate Not Found"
+            })
+        }
+
+        const jobId = req.params.jobId
+        const job = await JobPost.findById(jobId).select("_id")
+
+        if(!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job Not Found"
+            })
+        }
+
+        const application = await ApplicationModel.findOne({candidateId, jobId})
+        if(!application) {
+            return res.status(400).json({
+                success: false,
+                message: "No application found for this job"
+            })
+        }
+
+        if(application.status === "Withdrawn") {
+            return res.status(400).json({
+                success: false,
+                message: "Already Withdrawn the application"
+            })
+        }
+
+        const interview = await InterviewModel.findOne({application: application._id})
+            .populate({
+                path: "application",
+                populate: {
+                    path: "jobId",
+                    select: "title"
+                }
+            }).lean()
+        
+        const jobTitle = interview?.application?.jobId?.title
+        
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "No Interview scheduled for this application"
+            })
+        }
+
+        const {scheduledAt, mode, linkOrLocation, status} = interview
+        return res.status(200).json({
+            success: true,
+            message: "Interview details fetched successfully",
+            data: {
+                interviewId: interview._id,
+                jobTitle,
+                scheduledAt,
+                mode,
+                linkOrLocation,
+                status
+            }
+        })
+
+    } catch (error) {
+        console.log("Error while getting the interview details: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong getting the interview details. Please try again"
         })
     }
 }
