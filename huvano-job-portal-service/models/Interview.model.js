@@ -38,12 +38,20 @@ const interviewSchema = mongoose.Schema({
     },
     result: {
         type: String,
-        enum: ["Pending", "Selected", "Rejected"],
+        enum: ["Pending", "Selected", "Rejected", "Shortlisted"],
         default: "Pending"
     },
     hrId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "HRProfile"
+    },
+    response: {
+        type: String,
+        enum: ["Accept", "Decline", "Reschedule"]
+    },
+    rescheduleRequest: {
+        type: String,
+        enum: ["Accepted", "Declined"]
     }
 }, {timestamps: true})
 

@@ -7,6 +7,8 @@ const ApplicationModel = require("../models/Application.model");
 const mailSender = require("../utils/mailSender");
 const InterviewModel = require("../models/Interview.model");
 const { populate } = require("dotenv");
+const { interviewAcceptedEmail } = require("../mails/interviewInviteAcceptedEmail");
+const { interviewDeclinedEmail } = require("../mails/interviewInviteDeclinedEmail");
 
 // Controller for getting all the Job Posts for Candidate to go through
 exports.getJobPosts = async (req, res) => {
@@ -557,7 +559,7 @@ exports.getInterviewDetails = async (req, res) => {
             }).lean()
         
         const jobTitle = interview?.application?.jobId?.title
-        
+
         if(!interview) {
             return res.status(404).json({
                 success: false,
@@ -584,6 +586,127 @@ exports.getInterviewDetails = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong getting the interview details. Please try again"
+        })
+    }
+}
+
+// controller to accept or decline the interview invite
+exports.updateResponse = async (req, res) => {
+    try {
+        const candidateId = req.user._id
+        const candidate = await CandidateProfile.findById(candidateId)
+
+        if(!candidate) {
+            return res.status(404).json({
+                success: false,
+                message: "No Candidate Found"
+            })
+        }
+
+        const interviewId = req.params.interviewId
+        const interview = await InterviewModel.findById(interviewId).populate({
+            path: "application",
+            populate: {
+                path: "jobId",
+                select: "title"
+            }
+        })
+
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "No interview scheduled found"
+            })
+        }
+
+        const {response} = req.body
+        const allowedResponse = ["Accept", "Decline"]
+
+        if(!allowedResponse.includes(response)){
+            return res.status(400).json({
+                success: false,
+                message: "Please select a valid value from options"
+            })
+        }
+
+        if (interview.response === response) {
+            return res.status(400).json({
+                success: false,
+                message: `Interview invite already ${response.toLowerCase()}ed.`,
+            });
+        }
+
+        if(interview.response === "Accept" || interview.response === "Decline") {
+            return res.status(400).json({
+                success: false,
+                message: `Interview Invite already responded with ${interview.response.toLowerCase()}`
+            })
+        }
+
+        interview.response = response
+        await interview.save()
+
+        const application = interview.application
+        const candidateName = application?.myInformation?.firstName || "Candidate";
+        const email = application?.myInformation?.emailAddress;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Candidate email not found"
+            });
+        }
+        const jobTitle = application?.jobId?.title || "a role"
+        const interviewDateTime = interview.scheduledAt.toLocaleString();
+        const interviewMode = interview.mode
+
+        try {
+            if(interview.response === "Accept") {
+                const emailResponse = await mailSender(
+                    email,
+                    "Interview Invite - Accepted",
+                    interviewAcceptedEmail(
+                        candidateName,
+                        jobTitle,
+                        "Huvano HRMS",
+                        interviewDateTime,
+                        interviewMode,
+                        interview.linkOrLocation
+                    )
+                )
+
+                console.log("Email Response || Accepting Interview Invite", emailResponse)
+            } 
+
+            if(interview.response === "Decline") {
+                const emailResponse = await mailSender(
+                    email,
+                    "Interview Invite - Rejected",
+                    interviewDeclinedEmail(
+                        candidateName,
+                        jobTitle,
+                        "Huvano HRMS"
+                    )
+                )
+                console.log("Email Response || Declining Interview Invite", emailResponse)
+            }
+        } catch (error) {
+            console.log("Error while sending the response: ", error)
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the mail. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Response Noted Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while updating the status of interview invite: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong updating the status. Please try again"
         })
     }
 }
