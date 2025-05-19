@@ -1,5 +1,6 @@
 const { interviewCancellationEmail } = require("../mails/interviewCancellationEmail");
 const { interviewInvitationEmail } = require("../mails/interviewInvitation");
+const { interviewRescheduledEmail } = require("../mails/interviewRescheduleNotification");
 const { applicationRejected } = require("../mails/rejectionNotification");
 const { applicationShortlisted } = require("../mails/shortlistingNotification");
 const { applicationUnderReview } = require("../mails/underReviewNotification");
@@ -752,6 +753,124 @@ exports.getAllInterviews = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong fetching interview details. Please try again"
+        })
+    }
+}
+
+// Controller to reschedule the interview
+exports.rescheduleInterview = async (req, res) => {
+    try {
+        const interviewId = req.params.interviewId
+        const hrId = req.user._id
+
+        const hr = await HRProfile.findById(hrId)
+        if(!hr) {
+            return res.status(404).json({
+                success: false,
+                message: "HR not found"
+            })
+        }
+
+        const interview = await InterviewModel.findById(interviewId).populate({
+            path: "application"
+        })
+
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "Interview not found"
+            })
+        }
+
+        if(String(interview.hrId) !== String(hrId)){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized to reschedule the interview"
+            })
+        }
+
+        if(interview.status === "Cancelled") {
+            return res.status(400).json({
+                success: false,
+                message: "Interview already cancelled"
+            })
+        }
+
+        const {scheduledAt, mode, linkOrLocation} = req.body
+
+        if (![scheduledAt, mode, linkOrLocation].every(field => field && field.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: "Please fill all the required details",
+            });
+        }
+        
+        const allowedModes = ["Online", "In-Person"]
+        if(!allowedModes.includes(mode)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please Enter a valid value from options"
+            })
+        }
+
+        const previousDateTime = interview.scheduledAt.toLocaleString();
+        const formattedDate = new Date(scheduledAt);
+        interview.scheduledAt = formattedDate
+        interview.mode = mode
+        interview.linkOrLocation = linkOrLocation
+        interview.status = "Rescheduled"
+
+        await interview.save();
+
+        const application = interview.application
+        const candidateName = application?.myInformation?.firstName || "Candidate";
+        const email = application?.myInformation?.emailAddress;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Candidate email not found"
+            });
+        }
+        const jobTitle = application?.jobId?.title || "a role"
+        const interviewDateTime = interview.scheduledAt.toLocaleString();
+        const interviewMode = interview.mode
+        const interviewLink = interview.linkOrLocation
+
+        try {
+            const emailResponse = await mailSender(
+                email,
+                "Interview Invitation - Rescheduled",
+                interviewRescheduledEmail(
+                    candidateName,
+                    jobTitle,
+                    "Huvano HRMS",
+                    previousDateTime,
+                    interviewDateTime,
+                    interviewMode,
+                    interviewLink
+                )
+            )
+
+            console.log("Email Response || Rescheduling Email: ", emailResponse)
+        } catch (error) {
+            console.log("Error while sending interview rescheduling mail", email)
+            return res.status(400).json({
+                success: false,
+                message: "Something went wrong sending the mail. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Interview Rescheduled Successfully",
+            data: interview
+        })
+
+    } catch (error) {
+        console.log("Error in rescheduling the interview: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong rescheduling the interview. Please try again"
         })
     }
 }
