@@ -9,6 +9,7 @@ const InterviewModel = require("../models/Interview.model");
 const { populate } = require("dotenv");
 const { interviewAcceptedEmail } = require("../mails/interviewInviteAcceptedEmail");
 const { interviewDeclinedEmail } = require("../mails/interviewInviteDeclinedEmail");
+const { rescheduleRequestEmail } = require("../mails/rescheduleRequestEmail");
 
 // Controller for getting all the Job Posts for Candidate to go through
 exports.getJobPosts = async (req, res) => {
@@ -714,8 +715,101 @@ exports.updateResponse = async (req, res) => {
 // Controller to request for rescheduling the interview invite
 exports.requestReschedule = async (req, res) => {
     try {
+        const candidateId = req.user._id
+        const candidate = await CandidateProfile.findById(candidateId).select("_id")
+
+        if(!candidate) {
+            return res.status(404).json({
+                success: false,
+                message: "Candidate Not Found"
+            })
+        }
+        const interviewId = req.params.interviewId
+        const interview = await InterviewModel.findById(interviewId).populate({
+            path: "application",
+            populate: {
+                path: "jobId",
+                select: "title"
+            }
+        })
+
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "No Interview Scheduled found"
+            })
+        }
+
+        if(interview.status === "Reschedule") {
+            return res.status(400).json({
+                success: false,
+                message: "Already Reschedule request sent"
+            })
+        }
+
+        if(interview.status === "Decline") {
+            return res.status(400).json({
+                success: false,
+                message: "Already Declined the Interview Invite. Cannot Request for Reschedule"
+            })
+        }
+
+        const {requestedInterviewChanges} = req.body
+        const {requestedDate, reason} = requestedInterviewChanges
+
+        if(new Date(interview.scheduledAt) >= new Date(requestedDate)) {
+            return res.status(400).json({
+                success: false,
+                message: "Request Date should be greater than the scheduled date"
+            })
+        }
+
+        if(!reason || reason.trim().length < 10 || reason.trim().length > 100){
+            return res.status(400).json({
+                success: false,
+                message: "Reason should be between 10 to 100 characters long"
+            })
+        }
+
+        const newRequestedData = {requestedDate, reason}
+        interview.requestedInterviewChanges.push(newRequestedData)
+        interview.response = "RescheduleRequested"
+        interview.rescheduleRequest = "Pending"
+        await interview.save()
+
+        const latestChange = interview.requestedInterviewChanges[interview.requestedInterviewChanges.length - 1];
+
+        try {
+            const emailResponse = await mailSender(
+                interview?.application?.myInformation?.emailAddress,
+                "Reschedule Request Sent",
+                rescheduleRequestEmail(
+                    interview?.application?.myInformation?.firstName,
+                    interview?.application?.jobId?.title,
+                    "Huvano HRMS",
+                    latestChange.requestedDate.toLocaleString(),
+                    latestChange.reason
+                )
+            )
+            console.log("Email Response || Request Rescheduling: ", emailResponse)
+        } catch (error) {
+            console.log("Error while sending the request confirmation mail: ", error)
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the mail. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Rescheduling Request Sent Successfully"
+        })
 
     } catch (error) {
-        console.log("Error")
+        console.log("Error while requesting for rescheduling the interview: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong sending the request for rescheduling the interview. Please try again"
+        })
     }
 }

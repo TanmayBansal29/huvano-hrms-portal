@@ -310,22 +310,7 @@ const applicationSchema = mongoose.Schema({
                 message: "Should be shown if accepted is true"
             }
         }
-    },
-    requestedInterviewChanges: [{
-        requestedDate: {
-            type: Date
-        },
-        reason: {
-            type: String,
-            minLength: 20,
-            maxLength: 100
-        },
-        status: {
-            type: String,
-            enum: ["Pending", "Approved", "Rejected"],
-            default: "Pending"
-        }
-    }]
+    }
 }, { timestamps: true })
 
 const ApplicationModel = mongoose.model("ApplicationModel", applicationSchema)
