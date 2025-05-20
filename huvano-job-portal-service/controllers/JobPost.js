@@ -798,11 +798,15 @@ exports.rescheduleInterview = async (req, res) => {
 
         const {scheduledAt, mode, linkOrLocation} = req.body
 
-        if (![scheduledAt, mode, linkOrLocation].every(field => field && field.trim())) {
-            return res.status(400).json({
-                success: false,
-                message: "Please fill all the required details",
-            });
+        if (!scheduledAt || !mode || !linkOrLocation || 
+            typeof scheduledAt !== 'string' || 
+            typeof mode !== 'string' || 
+            typeof linkOrLocation !== 'string' || 
+            !mode.trim() || !linkOrLocation.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please fill all the required details"
+                });
         }
         
         const allowedModes = ["Online", "In-Person"]
@@ -871,6 +875,118 @@ exports.rescheduleInterview = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong rescheduling the interview. Please try again"
+        })
+    }
+}
+
+// Controller for HR to respond to the reschedule request by the candidate
+exports.rescheduleRequest = async (req, res) => {
+    try {
+        const hrId = req.user._id
+        const hr = await HRProfile.findById(hrId)
+
+        if(!hr) {
+            return res.status(404).json({
+                success: false,
+                message: "HR Not Found"
+            })
+        }
+
+        const interviewId = req.params.interviewId
+        const interview = await InterviewModel.findById(interviewId)
+
+        if(!interview) {
+            return res.status(404).json({
+                success: false,
+                message: "No Scheduled Interview Found"
+            })
+        }
+
+        if(String(interview.hrId) !== String(hrId)){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized to reschedule the interview"
+            })
+        }
+
+        const allowedResponse = ["Accepted", "Declined"]
+        const latestChange = interview.requestedInterviewChanges[interview.requestedInterviewChanges.length - 1];
+        const {rescheduleRequest} = req.body
+
+        if(!allowedResponse.includes(rescheduleRequest)){
+            return res.status(400).json({
+                success: false,
+                message: "Please select a valid option"
+            })
+        }
+
+        const {scheduledAt, mode, linkOrLocation} = req.body
+
+        if (!scheduledAt || !mode || !linkOrLocation || 
+            typeof scheduledAt !== 'string' || 
+            typeof mode !== 'string' || 
+            typeof linkOrLocation !== 'string' || 
+            !mode.trim() || !linkOrLocation.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please fill all the required details"
+                });
+        }
+        
+        const allowedModes = ["Online", "In-Person"]
+        if(!allowedModes.includes(mode)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please Enter a valid value from options"
+            })
+        }
+
+        const previousDateTime = interview.scheduledAt.toLocaleString();
+        const formattedDate = new Date(scheduledAt);
+        if (isNaN(formattedDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid date format for scheduledAt"
+            });
+        }
+        if (formattedDate <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: "Scheduled date must be in the future"
+            });
+        }
+        interview.scheduledAt = formattedDate
+        interview.mode = mode
+        interview.linkOrLocation = linkOrLocation
+        interview.status = "Rescheduled"
+        latestChange.rescheduleRequest = rescheduleRequest
+
+        await interview.save()
+
+        const application = interview.application
+        const candidateName = application?.myInformation?.firstName || "Candidate";
+        const email = application?.myInformation?.emailAddress;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Candidate email not found"
+            });
+        }
+        const jobTitle = application?.jobId?.title || "a role"
+        const interviewDateTime = interview.scheduledAt.toLocaleString();
+        const interviewMode = interview.mode
+        const interviewLink = interview.linkOrLocation
+
+        return res.status(200).json({
+            success: true,
+            message: "Response Submitted Successfully",
+            data: interview
+        })
+    } catch (error) {
+        console.error("Error while responding to rescheduling request", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong responding to reschedule request. Please try again"
         })
     }
 }

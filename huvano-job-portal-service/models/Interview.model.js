@@ -50,10 +50,7 @@ const interviewSchema = mongoose.Schema({
         enum: ["Pending" ,"Accept", "Decline", "RescheduleRequested"],
         default: "Pending"
     },
-    rescheduleRequest: {
-        type: String,
-        enum: ["Accepted", "Declined", "Pending"]
-    },
+    
     requestedInterviewChanges: [{
         requestedDate: {
             type: Date
@@ -62,7 +59,11 @@ const interviewSchema = mongoose.Schema({
             type: String,
             minLength: 20,
             maxLength: 100
-        }
+        },
+        rescheduleRequest: {
+            type: String,
+            enum: ["Accepted", "Declined", "Pending"]
+        },
     }]
 }, {timestamps: true})
 

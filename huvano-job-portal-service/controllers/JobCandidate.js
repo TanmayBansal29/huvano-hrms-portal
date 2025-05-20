@@ -740,7 +740,7 @@ exports.requestReschedule = async (req, res) => {
             })
         }
 
-        if(interview.status === "Reschedule") {
+        if(interview.status === "RescheduleRequested") {
             return res.status(400).json({
                 success: false,
                 message: "Already Reschedule request sent"
@@ -770,11 +770,10 @@ exports.requestReschedule = async (req, res) => {
                 message: "Reason should be between 10 to 100 characters long"
             })
         }
-
-        const newRequestedData = {requestedDate, reason}
+        const rescheduleRequest = "Pending"
+        const newRequestedData = {requestedDate, reason, rescheduleRequest}
         interview.requestedInterviewChanges.push(newRequestedData)
         interview.response = "RescheduleRequested"
-        interview.rescheduleRequest = "Pending"
         await interview.save()
 
         const latestChange = interview.requestedInterviewChanges[interview.requestedInterviewChanges.length - 1];
