@@ -4,7 +4,6 @@ const router = express.Router()
 // Importing important controllers for mapping with routes
 const {getJobPosts, getJobPostByID} = require("../controllers/JobCandidate")
 
-
 // Route for getting all the job Posts
 router.get("/jobs/feed", getJobPosts)
 
