@@ -2,6 +2,8 @@ const { interviewCancellationEmail } = require("../mails/interviewCancellationEm
 const { interviewInvitationEmail } = require("../mails/interviewInvitation");
 const { interviewRescheduledEmail } = require("../mails/interviewRescheduleNotification");
 const { applicationRejected } = require("../mails/rejectionNotification");
+const { rescheduleRequestAcceptedEmail } = require("../mails/rescheduleRequestAcceptedEmail");
+const { rescheduleRequestDeclinedEmail } = require("../mails/rescheduleRequestDeclinedEmail");
 const { applicationShortlisted } = require("../mails/shortlistingNotification");
 const { applicationUnderReview } = require("../mails/underReviewNotification");
 const ApplicationModel = require("../models/Application.model");
@@ -920,46 +922,48 @@ exports.rescheduleRequest = async (req, res) => {
             })
         }
 
-        const {scheduledAt, mode, linkOrLocation} = req.body
+        if(rescheduleRequest === "Accepted") {
+            const {scheduledAt, mode, linkOrLocation} = req.body
 
-        if (!scheduledAt || !mode || !linkOrLocation || 
-            typeof scheduledAt !== 'string' || 
-            typeof mode !== 'string' || 
-            typeof linkOrLocation !== 'string' || 
-            !mode.trim() || !linkOrLocation.trim()) {
+            if (!scheduledAt || !mode || !linkOrLocation || 
+                typeof scheduledAt !== 'string' || 
+                typeof mode !== 'string' || 
+                typeof linkOrLocation !== 'string' || 
+                !mode.trim() || !linkOrLocation.trim()) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Please fill all the required details"
+                    });
+            }
+            
+            const allowedModes = ["Online", "In-Person"]
+            if(!allowedModes.includes(mode)) {
                 return res.status(400).json({
                     success: false,
-                    message: "Please fill all the required details"
-                });
-        }
-        
-        const allowedModes = ["Online", "In-Person"]
-        if(!allowedModes.includes(mode)) {
-            return res.status(400).json({
-                success: false,
-                message: "Please Enter a valid value from options"
-            })
-        }
+                    message: "Please Enter a valid value from options"
+                })
+            }
 
-        const previousDateTime = interview.scheduledAt.toLocaleString();
-        const formattedDate = new Date(scheduledAt);
-        if (isNaN(formattedDate.getTime())) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid date format for scheduledAt"
-            });
+            const previousDateTime = interview.scheduledAt.toLocaleString();
+            const formattedDate = new Date(scheduledAt);
+            if (isNaN(formattedDate.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid date format for scheduledAt"
+                });
+            }
+            if (formattedDate <= new Date()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Scheduled date must be in the future"
+                });
+            }
+            interview.scheduledAt = formattedDate
+            interview.mode = mode
+            interview.linkOrLocation = linkOrLocation
+            interview.status = "Rescheduled"
+            latestChange.rescheduleRequest = rescheduleRequest
         }
-        if (formattedDate <= new Date()) {
-            return res.status(400).json({
-                success: false,
-                message: "Scheduled date must be in the future"
-            });
-        }
-        interview.scheduledAt = formattedDate
-        interview.mode = mode
-        interview.linkOrLocation = linkOrLocation
-        interview.status = "Rescheduled"
-        latestChange.rescheduleRequest = rescheduleRequest
 
         await interview.save()
 
@@ -976,6 +980,46 @@ exports.rescheduleRequest = async (req, res) => {
         const interviewDateTime = interview.scheduledAt.toLocaleString();
         const interviewMode = interview.mode
         const interviewLink = interview.linkOrLocation
+        const response = latestChange.rescheduleInterview
+
+        try {
+            if(response === "Accepted") {
+                const emailResponse = await mailSender(
+                    email,
+                    "Reschedule Request - Accepted || Interview Invite",
+                    rescheduleRequestAcceptedEmail(
+                        candidateName,
+                        jobTitle,
+                        "Huvano HRMS",
+                        interviewDateTime,
+                        interviewMode,
+                        interviewLink
+                    )
+                )
+                console.log("Email Response || Accepting the Rescheduling Request: ", emailResponse)
+            }
+
+            if(response === "Declined") {
+                const emailResponse = await mailSender(
+                    email,
+                    "Reschedule Request - Declined",
+                    rescheduleRequestDeclinedEmail(
+                        candidateName,
+                        jobTitle,
+                        "Huvano HRMS",
+                        interviewDateTime,
+                        "Interviewer not Available at the Requested Time"
+                    )
+                )
+                console.log("Email Response || Declining the Rescheduling Request: ", emailResponse)
+            }
+        } catch (error) {
+            console.log("Error while sending the mail for responding to reschedule request: ", error)
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the mail"
+            })
+        }
 
         return res.status(200).json({
             success: true,
