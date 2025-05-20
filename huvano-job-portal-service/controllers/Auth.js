@@ -1,13 +1,11 @@
 const CandidateProfile = require("../models/CandidateProfile.model")
 const OTP = require("../models/Otp.model")
 const bcrypt = require("bcrypt")
-const crypto = require("crypto")
 const jwt = require("jsonwebtoken")
 const otpGenerator = require("otp-generator")
 const {passwordUpdated} = require("../mails/passwordUpdateConfirmation")
 const mailSender = require("../utils/mailSender")
 const validator = require("validator")
-const { resetPasswordTemplate } = require("../mails/resetPasswordEmail")
 require("dotenv").config()
 
 // Signup Controller for Registering Candidates
