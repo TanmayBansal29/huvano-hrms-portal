@@ -1,8 +1,11 @@
 const { interviewCancellationEmail } = require("../mails/interviewCancellationEmail");
 const { interviewInvitationEmail } = require("../mails/interviewInvitation");
 const { interviewRescheduledEmail } = require("../mails/interviewRescheduleNotification");
+const { resultRejectedEmail } = require("../mails/rejectedEmail");
 const { rescheduleRequestAcceptedEmail } = require("../mails/rescheduleRequestAcceptedEmail");
 const { rescheduleRequestDeclinedEmail } = require("../mails/rescheduleRequestDeclinedEmail");
+const { resultSelectedEmail } = require("../mails/selectedEmail");
+const { resultShortlistedEmail } = require("../mails/shortlistedEmail");
 const ApplicationModel = require("../models/Application.model");
 const HRProfile = require("../models/Hr.model");
 const InterviewModel = require("../models/Interview.model");
@@ -540,6 +543,116 @@ exports.rescheduleRequest = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong responding to reschedule request. Please try again"
+        })
+    }
+}
+
+// Controller for updating the interview result field after interview
+exports.updateInterviewResult = async (req, res) => {
+    try {
+        const interviewId = req.params.interviewId
+        const {result} = req.body
+        const user = req.user
+
+        if(!user || user.role !== "HR") {
+            return res.status(403).json({
+                success: false,
+                message: "Access Denied: Only HR can update interview results"
+            })
+        }
+
+        if(!result) {
+            return res.status(400).json({
+                success: false,
+                message: "Interview Result value is required"
+            })
+        }
+
+        const allowedResults = ["Pending", "Selected", "Rejected", "Shortlisted"]
+        if(!allowedResults.includes(result)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please choose a valid result option"
+            })
+        }
+
+        const interview = await InterviewModel.findById(interviewId).populate({
+            path: "application",
+            populate: {
+                path: "jobId",
+                select: "title"
+            }
+        })
+        if(!interview) {
+            return res.status(400).json({
+                success: false,
+                message: "Interview Not Founc"
+            })
+        }
+
+        interview.result = result
+        await interview.save()
+
+        try {
+            if(interview.result === "Selected") {
+                const emailResponse = await mailSender(
+                    interview?.application?.myInformation?.emailAddress,
+                    `Congratulations - Selected for the position ${interview?.application?.jobId?.title}`,
+                    resultSelectedEmail(
+                        interview?.application?.myInformation?.firstName,
+                        interview?.application?.jobId?.title,
+                        "Huvano HRMS"
+                    )
+                )
+
+                console.log("Email Response || Selection: ", emailResponse)
+            } 
+
+            if(interview.result === "Rejected") {
+                const emailResponse = await mailSender(
+                    interview?.application?.myInformation?.emailAddress,
+                    "Better Luck Next Time - Rejected",
+                    resultRejectedEmail(
+                        interview?.application?.myInformation?.firstName,
+                        interview?.application?.jobId?.title,
+                        "Huvano HRMS"
+                    )
+                )
+
+                console.log("Email Response || Rejection: ", emailResponse)
+            }
+
+            if(interview.result === "Shortlisted"){
+                const emailResponse = await mailSender(
+                    interview?.application?.myInformation?.emailAddress,
+                    "Congratulations - Shortlisted for next round",
+                    resultShortlistedEmail(
+                        interview?.application?.myInformation?.firstName,
+                        interview?.application?.jobId?.title,
+                        "Huvano HRMS"
+                    )
+                )
+
+                console.log("Email Response || Shortlisted: ", emailResponse)
+            }
+        } catch (error) {
+            console.log("Error while sending the mail for result updation")
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending mail for result updation. Please try again"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Interview Result Updated",
+            interview
+        })
+    } catch (error) {
+        console.log("Error while updating the interview result: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong updating the interview result. Please try again"
         })
     }
 }
