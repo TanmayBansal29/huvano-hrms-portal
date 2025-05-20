@@ -64,7 +64,16 @@ const interviewSchema = mongoose.Schema({
             type: String,
             enum: ["Accepted", "Declined", "Pending"]
         },
-    }]
+    }],
+
+    reminder12Sent: {
+        type: Boolean,
+        default: false,
+    },
+    reminder30Sent: {
+        type: Boolean,
+        default: false,
+    },
 }, {timestamps: true})
 
 const InterviewModel = mongoose.model("Interview", interviewSchema)
