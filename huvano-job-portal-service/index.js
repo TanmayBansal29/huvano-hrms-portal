@@ -1,4 +1,3 @@
-const mongoose = require("mongoose")
 const express = require("express")
 const candidateRoutes = require("./routes/Candidate")
 const HRRoutes = require("./routes/HR")
@@ -13,6 +12,7 @@ const connectDB = require("./config/database")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 require("./cronJobs/autoDeclineInterviews")
+require("./cronJobs/interviewReminder")
 
 const app = express()
 
