@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken")
 exports.auth = async (req, res, next) => {
     try {
         // Extract the token
-        const token = res.cookies?.token || req.body?.token || req.header("Authorization").replace("Bearer", "")
+        const token = req.cookies?.token || req.body?.token || req.header("Authorization").replace("Bearer", " ")
 
         // Check - 1 If token is missing or not
         if(!token){
@@ -36,7 +36,7 @@ exports.auth = async (req, res, next) => {
 
 // Middleware to check whether the login data is of HR or candidate as per the route
 exports.isHR = (req, res, next) => {
-    if(res.user?.role != "HR"){
+    if(req.user?.role != "HR"){
         return res.status(403).json({
             success: false,
             message: "Access Denied: HR Only"
@@ -46,7 +46,7 @@ exports.isHR = (req, res, next) => {
 }
 
 exports.isCandidate = (req, res, next) => {
-    if(res.user?.role != "Candidate"){
+    if(req.user?.role != "Candidate"){
         return res.status(403).json({
             success: false,
             message: "Access Denied: Candidate Only"
