@@ -160,3 +160,57 @@ exports.getParticularOffer = async (req, res) => {
         })
     }
 }
+
+// Controller to update a offer letter
+exports.updateOfferLetter = async (req, res) => {
+    try {
+        const user = req.user
+        if(!user || user.role !== "HR") {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthroized Access: Only HRs allowed"
+            })
+        }
+        const offerLetterId = req.params.offerLetterId
+        const offerLetter = await OfferLetter.findById(offerLetterId)
+
+        if(!offerLetter) {
+            return res.status(404).json({
+                success: false,
+                message: "Offer Letter not found"
+            })
+        }
+
+        if(offerLetter.issuedBy.toString() !== user._id){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized, only HR who issued can update the offer letter"
+            })
+        }
+
+        const {content} = req.body
+        const trimmedContent = content?.trim()
+        if(!trimmedContent || !trimmedContent.length < 200 || !trimmedContent.length > 400) {
+            return res.status(400).json({
+                success: false,
+                message: "Content should be between 200 to 400 characters long"
+            })
+        }
+
+        offerLetter.content = content
+        offerLetter.issuedAt = new Date()
+        await offerLetter.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "Offer Letter Updated Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while updating the offer letter: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong updating the offer letter"
+        })
+    }
+}
