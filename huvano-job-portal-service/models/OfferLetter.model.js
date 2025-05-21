@@ -25,7 +25,7 @@ const OfferLetterSchema = mongoose.Schema({
         type: String,
         required: true,
         minLength: 200,
-        maxLength: 400
+        maxLength: 600
     },
     issuedBy: {
         type: mongoose.Schema.Types.ObjectId,

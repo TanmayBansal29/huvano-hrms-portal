@@ -284,32 +284,9 @@ const applicationSchema = mongoose.Schema({
             ref: "Interview"
         }
     ],
-    finalOffer: {
-        offerLetterUrl: {
-            type: String,
-            validate: {
-                validator: function (v) {
-                    return !v || /^https?:\/\/.+$/.test(v);
-                },
-                message: props => `${props.value} is not a valid offer letter URL`
-            } 
-        },
-        offeredOn: {
-            type: Date
-        },
-        accepted: {
-            type: Boolean,
-            default: false
-        },
-        acceptedOn: {
-            type: Date,
-            validate: {
-                validator: function (v) {
-                    return !this.accepted || !!v;
-                },
-                message: "Should be shown if accepted is true"
-            }
-        }
+    offerLetter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OfferLetter"
     }
 }, { timestamps: true })
 
