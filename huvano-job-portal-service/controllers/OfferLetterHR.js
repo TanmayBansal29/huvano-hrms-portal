@@ -1,6 +1,8 @@
+const { revokeOfferEmail } = require("../mails/offerRevokeEmail")
 const ApplicationModel = require("../models/Application.model")
 const HRProfile = require("../models/Hr.model")
 const OfferLetter = require("../models/OfferLetter.model")
+const mailSender = require("../utils/mailSender")
 
 // Controller for creating the offer letter
 exports.createOfferLetter = async (req, res) => {
@@ -226,7 +228,13 @@ exports.revokeOffer = async (req, res) => {
             })
         }
         const offerLetterId = req.params.offerLetterId
-        const offerLetter = await OfferLetter.findById(offerLetterId)
+        const offerLetter = await OfferLetter.findById(offerLetterId).populate({
+            path: "applicationId",
+            populate: {
+                path: 'jobId',
+                select: 'title'
+            }
+        })
 
         if(!offerLetter) {
             return res.status(404).json({
@@ -251,6 +259,29 @@ exports.revokeOffer = async (req, res) => {
 
         offerLetter.status = "Revoked"
         await offerLetter.save()
+
+        try {
+            const emailResponse = await mailSender(
+                offerLetter?.applicationId?.myInformation?.emailAddress,
+                "Offer Revoked",
+                revokeOfferEmail(
+                    offerLetter?.applicationId?.myInformation?.firstName,
+                    offerLetter?.applicationId?.jobId?.title,
+                    "Huvano HRMS",
+                    offerLetter.issuedBy.firstName,
+                    offerLetter.issuedBy.email
+                )
+            )
+
+            console.log("Email Response || Offer Revokation: ", emailResponse)
+            
+        } catch (err) {
+            console.log("Error while sending the offer revoke mail", err)
+            return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the mail. Please try again later"
+            })
+        }
 
         return res.status(200).json({
             success: true,
