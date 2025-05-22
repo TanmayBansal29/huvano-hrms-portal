@@ -18,7 +18,7 @@ const OfferLetterSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["Pending", "Accepted", "Declined", "Revoked"],
+        enum: ["Pending", "Sent", "Accepted", "Declined", "Revoked"],
         default: "Pending"
     },
     content: {

@@ -1,3 +1,4 @@
+const { sendOfferLetterEmail } = require("../mails/offerLetterSendEmail")
 const { revokeOfferEmail } = require("../mails/offerRevokeEmail")
 const ApplicationModel = require("../models/Application.model")
 const HRProfile = require("../models/Hr.model")
@@ -129,12 +130,12 @@ exports.getParticularOffer = async (req, res) => {
         }
 
         const offerLetterId = req.params.offerLetterId
-        const offerLetter = await OfferLetter.findById(offerLetterId)
+        const offerLetter = await OfferLetter.findById(offerLetterId).populate("issuedBy")
             .populate("candidateId", "name email")
             .populate("jobId", "title location")
             .populate("applicationId", "_id");
 
-        if (offerLetter.issuedBy.toString() !== user._id.toString()) {
+        if (offerLetter.issuedBy._id.toString() !== user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: "Access Denied: This offer letter was not issued by you"
@@ -174,7 +175,7 @@ exports.updateOfferLetter = async (req, res) => {
             })
         }
         const offerLetterId = req.params.offerLetterId
-        const offerLetter = await OfferLetter.findById(offerLetterId)
+        const offerLetter = await OfferLetter.findById(offerLetterId).populate("issuedBy")
 
         if(!offerLetter) {
             return res.status(404).json({
@@ -183,7 +184,7 @@ exports.updateOfferLetter = async (req, res) => {
             })
         }
 
-        if(offerLetter.issuedBy.toString() !== user._id){
+        if(offerLetter.issuedBy._id.toString() !== user._id){
             return res.status(403).json({
                 success: false,
                 message: "Unauthorized, only HR who issued can update the offer letter"
@@ -228,7 +229,7 @@ exports.revokeOffer = async (req, res) => {
             })
         }
         const offerLetterId = req.params.offerLetterId
-        const offerLetter = await OfferLetter.findById(offerLetterId).populate({
+        const offerLetter = await OfferLetter.findById(offerLetterId).populate("issuedBy").populate({
             path: "applicationId",
             populate: {
                 path: 'jobId',
@@ -243,7 +244,7 @@ exports.revokeOffer = async (req, res) => {
             })
         }
 
-        if(offerLetter.issuedBy.toString() !== user._id) {
+        if(offerLetter.issuedBy._id.toString() !== user._id) {
             return res.status(403).json({
                 success: false,
                 message: "Unauthroized Access: Only issuing HR can revoke the offer"
@@ -258,6 +259,10 @@ exports.revokeOffer = async (req, res) => {
         }
 
         offerLetter.status = "Revoked"
+        if(offerLetter.applicationId) {
+            offerLetter.applicationId.result = "Rejected"
+            await offerLetter.applicationId.save()
+        }
         await offerLetter.save()
 
         try {
@@ -274,7 +279,7 @@ exports.revokeOffer = async (req, res) => {
             )
 
             console.log("Email Response || Offer Revokation: ", emailResponse)
-            
+
         } catch (err) {
             console.log("Error while sending the offer revoke mail", err)
             return res.status(500).json({
@@ -296,3 +301,73 @@ exports.revokeOffer = async (req, res) => {
         })
     }
 }
+
+// Controller for sending the offer Letter to candidate
+exports.sendOfferLetter = async(req, res) => {
+    try {
+        const user = req.user
+        if(!user || user.role !== "HR"){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized Access: Only HRs can do this"
+            })
+        }
+
+        const offerLetterId = req.params.offerLetterId
+        const offerLetter = await OfferLetter.findById(offerLetterId).populate("issuedBy").populate({
+            path: "applicationId",
+            populate:{
+                path: "jobId",
+                select: "title"
+            }
+        })
+
+        if(!offerLetter) {
+            return res.status(404).json({
+                success: false,
+                message: "No Offer Letter found"
+            })
+        }
+
+        if(offerLetter.issuedBy._id.toString() !== user._id) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized Access: Only Issuing HR can send the Offer Letter"
+            })
+        }
+
+        if(offerLetter.status === "Revoked") {
+            return res.status(400).json({
+                success: false,
+                message: "Offer already Revoked"
+            })
+        }
+
+        offerLetter.status = "Sent"
+        await offerLetter.save()
+
+        await mailSender(
+            offerLetter?.applicationId?.myInformation?.emailAddress,
+            "Congratulations for the Offer: Offer Letter",
+            sendOfferLetterEmail(
+                offerLetter?.applicationId?.myInformation?.firstName,
+                offerLetter?.applicationId?.jobId?.title,
+                "Huvano HRMS",
+                offerLetter.issuedBy.firstName,
+                offerLetter.issuedBy.email
+            )
+        )
+
+        return res.status(200).json({
+            success: true,
+            message: "Offer Letter Sent Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while sending the offer error: ", error)
+        return res.status(500).json({
+                success: false,
+                message: "Something went wrong sending the offer. Please try again"
+        })
+    }
+} 
