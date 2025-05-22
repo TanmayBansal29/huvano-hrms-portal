@@ -214,3 +214,54 @@ exports.updateOfferLetter = async (req, res) => {
         })
     }
 }
+
+// Controller to delete / revoke the offer
+exports.revokeOffer = async (req, res) => {
+    try {
+        const user = req.user
+        if(!user || user.role !== "HR") {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized Access: Only HRs can access this"
+            })
+        }
+        const offerLetterId = req.params.offerLetterId
+        const offerLetter = await OfferLetter.findById(offerLetterId)
+
+        if(!offerLetter) {
+            return res.status(404).json({
+                success: false,
+                message: "Offer Letter Not Found"
+            })
+        }
+
+        if(offerLetter.issuedBy.toString() !== user._id) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthroized Access: Only issuing HR can revoke the offer"
+            })
+        }
+
+        if(offerLetter.status === "Revoked" || offerLetter.status === "Declined") {
+            return res.status(400).json({
+                success: false,
+                message: "Offer Letter already Revoked or Declined"
+            })
+        }
+
+        offerLetter.status = "Revoked"
+        await offerLetter.save()
+
+        return res.status(200).json({
+            success: true,
+            message: "Offer Revoked Successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while revoking the offer letter: ", error)
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while revoking the offer"
+        })
+    }
+}
