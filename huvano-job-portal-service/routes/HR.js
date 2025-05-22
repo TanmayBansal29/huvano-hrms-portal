@@ -8,10 +8,10 @@ const {signupHR, loginHR, logoutHR} = require("../controllers/AuthHR")
 router.post("/signupHR", signupHR)
 
 // Route for HR Login
-router.post("loginHR", loginHR)
+router.post("/loginHR", loginHR)
 
-// Router for HR logout
-router.post("logoutHR", logoutHR)
+// Route for HR logout
+router.post("/logoutHR", logoutHR)
 
 
 module.exports = router

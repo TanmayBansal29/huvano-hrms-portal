@@ -7,6 +7,7 @@ const InterviewScheduleRoutes = require("./routes/InterviewScheduling")
 const InterviewInviteRoutes = require("./routes/InterviewInvite")
 const ApplicationCandidateRoutes = require("./routes/ApplicationCandidate")
 const ApplicationHRRoutes = require("./routes/ApplicationHR")
+const OfferLetterHRRoutes = require("./routes/OfferLetter")
 require("dotenv").config()
 const connectDB = require("./config/database")
 const cookieParser = require("cookie-parser")
@@ -34,7 +35,8 @@ app.use("/api/v1/jobPosts", CandidateJobPostsRoutes)
 app.use("/api/v1", InterviewScheduleRoutes)
 app.use("/api/v1/check", InterviewInviteRoutes)
 app.use("/api/v1/send", ApplicationCandidateRoutes)
-app.use("/api/v1/retreive", ApplicationHRRoutes )
+app.use("/api/v1/retreive", ApplicationHRRoutes)
+app.use("/api/v1/offer", OfferLetterHRRoutes)
 
 // Connection to Database and Starting the server
 connectDB().then(() => {

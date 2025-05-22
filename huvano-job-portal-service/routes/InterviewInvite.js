@@ -4,13 +4,13 @@ const { getInterviewDetails, updateResponse, requestReschedule } = require("../c
 const router = express.Router()
 
 
-// Router for Candidate to get the details of interview Scheduled
+// Route for Candidate to get the details of interview Scheduled
 router.get("/get/interview/details/:jobId", auth, isCandidate, getInterviewDetails)
 
-// Router for Candidate to respond to the interview invite
+// Route for Candidate to respond to the interview invite
 router.patch("/update/response/interview/:interviewId", auth, isCandidate, updateResponse)
 
-// Router for candidate to request for reschedule of interview
+// Route for candidate to request for reschedule of interview
 router.patch("/request/reschedule/interview/:interviewId", auth, isCandidate, requestReschedule)
 
 module.exports = router

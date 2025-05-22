@@ -15,13 +15,13 @@ router.patch("/update/jobPost/:jobId", auth, isHR, updateJobPost)
 // Route for deleting the job post
 router.delete("/delete/jobPost/:jobId", auth, isHR, deletejobPost)
 
-// Router for getting all the job posts from HR
+// Route for getting all the job posts from HR
 router.get("/hr/jobs", auth, isHR, getJobPostsByHR)
 
-// Router for getting the job post by jobId
+// Route for getting the job post by jobId
 router.get("/job/:jobId", auth, isHR, getJobPostById)
 
-// Router for changing the status of the job post
+// Route for changing the status of the job post
 router.patch("/job/changeStatus/:jobId", auth, isHR, closeJobPost)
 
 module.exports = router

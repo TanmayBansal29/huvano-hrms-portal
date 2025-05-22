@@ -4,13 +4,13 @@ const { getAllApplications, getApplicationById, updateApplicationStatus } = requ
 const router = express.Router()
 
 
-// Router for HR to get all the applications for the job
+// Route for HR to get all the applications for the job
 router.get("/job/applications/:jobId", auth, isHR, getAllApplications)
 
-// Router for HR to get a particular application
+// Route for HR to get a particular application
 router.get("/job/application/:applicationId", auth, isHR, getApplicationById)
 
-// Router for HR to update the application status
+// Route for HR to update the application status
 router.patch("/job/application/updateStatus/:applicationId", auth, isHR, updateApplicationStatus)
 
 module.exports = router
