@@ -73,3 +73,22 @@ exports.getRevokedOffers = async (req, res) => {
         })
     }
 }
+
+// Controller for fetching a particular offer letter
+exports.fetchParticularOffer = async (req, res) => {
+    try{
+        const user = req.user
+        if(!user || user.role !== "Candidate") {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized  "
+            })
+        }
+    } catch (error) {
+        console.log("Error while fetching the particular offer letter")
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while fetching the particular offer"
+        })
+    }
+}

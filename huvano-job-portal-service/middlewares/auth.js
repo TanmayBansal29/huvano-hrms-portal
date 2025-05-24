@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken")
 exports.auth = async (req, res, next) => {
     try {
         // Extract the token
-        const token = req.cookies?.token || req.body?.token || req.header("Authorization").replace("Bearer", " ")
+        const token = req.cookies?.token || req.body?.token || req.header("Authorization")
 
         // Check - 1 If token is missing or not
         if(!token){
@@ -20,7 +20,7 @@ exports.auth = async (req, res, next) => {
             req.user = decode
             next();
         } catch (error) {
-            return res.status(500).json({
+            return res.status(401).json({
                 success: false,
                 message: "Token is Invalid or Expired"
             })
