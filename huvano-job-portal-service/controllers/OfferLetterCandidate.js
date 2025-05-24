@@ -81,9 +81,30 @@ exports.fetchParticularOffer = async (req, res) => {
         if(!user || user.role !== "Candidate") {
             return res.status(403).json({
                 success: false,
-                message: "Unauthorized  "
+                message: "Unauthorized  Access: Only Candidates can access it"
             })
         }
+
+        const offerLetterId = req.params.offerLetterId
+        const offer = await OfferLetter.findById(offerLetterId)
+            .populate({
+                path: ""
+            })
+
+        if(!offer) {
+            return res.status(404).json({
+                success: false,
+                message: "Offer Letter not found for candidate"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Offer Letter Fetched Successfully",
+            status: offer.status,
+            data: offer
+        })
+
     } catch (error) {
         console.log("Error while fetching the particular offer letter")
         return res.status(500).json({
