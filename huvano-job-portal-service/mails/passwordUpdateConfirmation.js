@@ -1,4 +1,4 @@
-exports.passwordUpdated = (email, name) => {
+exports.passwordUpdated = (emailAddress, name) => {
 	return `<!DOCTYPE html>
     <html>
     
@@ -72,7 +72,7 @@ exports.passwordUpdated = (email, name) => {
             <div class="message">Password Update Confirmation</div>
             <div class="body">
                 <p>Hey ${name},</p>
-                <p>Your password has been successfully updated for the email <span class="highlight">${email}</span>.
+                <p>Your password has been successfully updated for the email <span class="highlight">${emailAddress}</span>.
                 </p>
                 <p>If you did not request this password change, please contact us immediately to secure your account.</p>
             </div>

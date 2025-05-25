@@ -46,6 +46,7 @@ exports.isHR = (req, res, next) => {
 }
 
 exports.isCandidate = (req, res, next) => {
+    console.log(req.user)
     if(req.user?.role != "Candidate"){
         return res.status(403).json({
             success: false,

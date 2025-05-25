@@ -112,7 +112,7 @@ exports.login = async(req, res) => {
         // Generate JWT token and compare password
         if(await bcrypt.compare(password, user.password)){
             const token = jwt.sign(
-                { emailAddress: user.emailAddress, id: user._id },
+                { emailAddress: user.emailAddress, id: user._id, role: user.role },
                 process.env.JWT_SECRET,
                 { expiresIn: "4h" }
             );
@@ -336,10 +336,10 @@ exports.changePassword = async (req, res) => {
         // Send Notification email
         try {
             const emailResponse = await mailSender(
-                updatedUserDetails.email,
+                updatedUserDetails.emailAddress,
                 `Password Updated Successfully for ${updatedUserDetails.firstName} ${updatedUserDetails.lastName}`,
                 passwordUpdated(
-                    updatedUserDetails.email,
+                    updatedUserDetails.emailAddress,
                     updatedUserDetails.firstName
                 )
             )
