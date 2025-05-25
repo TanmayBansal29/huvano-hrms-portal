@@ -10,9 +10,9 @@ require("dotenv").config()
 exports.forgotPassword = async (req, res) => {
     try {
         // Getting the email from req.body
-        const {email} = req.body
+        const {emailAddress} = req.body
         
-        const user = await CandidateProfile.findOne({email})
+        const user = await CandidateProfile.findOne({emailAddress})
 
         // Check - 1 If user exists with this mail or not
         if(!user) {
@@ -34,7 +34,7 @@ exports.forgotPassword = async (req, res) => {
         // Send Reset email
         const resetUrl = `https://localhost:3000/reset-password/${resetToken}`
         await mailSender(
-            email,
+            emailAddress,
             "Password Reset Request",
             resetPasswordTemplate(user.firstName, resetUrl)
         )
@@ -57,7 +57,7 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async(req, res) => {
     try {
         // Getting token, new Password and confirm password from req.body
-        const {token, newPassword, confirmNewPassword} = req.body
+        const { token, newPassword, confirmNewPassword} = req.body
 
         // Finding the user from the Database
         const user = await CandidateProfile.findOne({resetPasswordToken: token})
