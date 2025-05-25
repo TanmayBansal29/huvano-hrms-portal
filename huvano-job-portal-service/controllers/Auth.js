@@ -210,8 +210,8 @@ exports.sendotp = async (req, res) => {
 exports.resendOtp = async (req, res) => {
     try {
         // Getting the otp from the req body
-        const {email} = req.body
-        const existingOTP = await OTP.findOne({ email })
+        const {emailAddress} = req.body
+        const existingOTP = await OTP.findOne({ emailAddress })
         
         // Check - 1 If no OTP was ever generated
         if(!existingOTP) {
