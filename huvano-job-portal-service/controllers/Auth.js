@@ -88,10 +88,10 @@ exports.signup = async(req, res) => {
 exports.login = async(req, res) => {
     try {
         // Get email and password from req body
-        const {email, password} = req.body
+        const {emailAddress, password} = req.body
 
         // Check - 1 Check if email or password is missing
-        if(!email || !password) {
+        if(!emailAddress || !password) {
             return res.status(400).json({
                 success: false,
                 message: "Please Enter all the required details"
@@ -99,7 +99,7 @@ exports.login = async(req, res) => {
         }
 
         // Find the user with provided email
-        const user = await CandidateProfile.findOne({email})
+        const user = await CandidateProfile.findOne({emailAddress})
 
         // If user is not found in the database
         if(!user) {
@@ -112,7 +112,7 @@ exports.login = async(req, res) => {
         // Generate JWT token and compare password
         if(await bcrypt.compare(password, user.password)){
             const token = jwt.sign(
-                { email: user.email, id: user._id },
+                { emailAddress: user.emailAddress, id: user._id },
                 process.env.JWT_SECRET,
                 { expiresIn: "4h" }
             );
@@ -128,7 +128,7 @@ exports.login = async(req, res) => {
             res.cookie("token", token, options).status(200).json({
                 success: true,
                 token,
-                user: userData,
+                data: userData,
                 message: "Login Successful"
             });
         } else {
