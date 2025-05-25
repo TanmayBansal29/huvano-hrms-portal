@@ -88,7 +88,16 @@ exports.fetchParticularOffer = async (req, res) => {
         const offerLetterId = req.params.offerLetterId
         const offer = await OfferLetter.findById(offerLetterId)
             .populate({
-                path: ""
+                path: "candidateId",
+                select: "firstName lastName emailAddress"
+            })
+            .populate({
+                path: "jobId",
+                select: "title"
+            })
+            .populate({
+                path: "issuedBy",
+                select: "firstName email"
             })
 
         if(!offer) {
@@ -110,6 +119,61 @@ exports.fetchParticularOffer = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong while fetching the particular offer"
+        })
+    }
+}
+
+// Controller for Accepting/Declining the offer letter
+exports.statusUpdate = async(req, res) => {
+    try {
+        const user = req.user
+        if(!user || user.role !== "Candidate"){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized access: Only Candidates allowed to change the status"
+            })
+        }
+
+        const offerLetterId = req.params.offerLetterId
+        const offer = await OfferLetter.findById(offerLetterId)
+
+        if(!offer) {
+            return res.status(404).json({
+                success: false,
+                message: "No Offer Letter Found"
+            })
+        }
+
+        const {status} = req.body
+        const allowedStatus = ["Accepted", "Declined"]
+
+        if(!allowedStatus.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please select a valid option"
+            })
+        }
+
+        if(offer.status === "Revoked" || offer.status === "Declined") {
+            return res.status(400).json({
+                success: false,
+                message: "Status cannot be changed. Already revoked or declined"
+            })
+        } 
+
+        offer.status = status
+        await offer.save()
+
+        return res.status(200).json({
+            success: true,
+            message: `Offer Letter: ${offer.status}`
+        })
+
+    } catch (error) {
+        console.log("Error while changing the status of offer letter: ", error)
+        return res.status(400).json({
+            success: false,
+            message: "Something went wrong changing the status. Please try again"
         })
     }
 }
