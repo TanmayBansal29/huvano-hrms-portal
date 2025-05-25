@@ -13,11 +13,11 @@ exports.signup = async(req, res) => {
     try{
         // Destruct fields from req body
         const {
-            firstName, lastName, email, password, confirmPassword, otp
+            firstName, lastName, emailAddress, password, confirmPassword, otp
         } = req.body
 
         // Check - 1: Whether user have entered all details or not
-        if(!firstName || !lastName || !email
+        if(!firstName || !lastName || !emailAddress
             || !password || !confirmPassword || !otp) {
                 return res.status(403).json({
                     success: false,
@@ -34,7 +34,7 @@ exports.signup = async(req, res) => {
         }
 
         // Check - 3: Whether User already exists in DB or not
-        const existingUser = await CandidateProfile.findOne({email})
+        const existingUser = await CandidateProfile.findOne({emailAddress})
         if(existingUser) {
             res.status(400).json({
                 success: false,
@@ -43,15 +43,15 @@ exports.signup = async(req, res) => {
         }
 
         // Finding the most recent otp sent to the user
-        const response = await OTP.findOne({email}).sort({createdAt: -1}).limit(1)
+        const response = await OTP.findOne({emailAddress}).sort({createdAt: -1}).limit(1)
         console.log("Recent OTP Candidate Controller", response)
-        if(response.length == 0) {
+        if(response.length === 0) {
             // OTP not found for the Email
             return res.status(400).json({
                 success: false,
                 message: "OTP is invalid"
             })
-        } else if (otp != response[0].otp) {
+        } else if (otp !== response.otp) {
             // OTP is not same
             return res.status(400).json({
                 success: false,
@@ -66,7 +66,7 @@ exports.signup = async(req, res) => {
         const user = await CandidateProfile.create({
             firstName,
             lastName,
-            email,
+            emailAddress,
             password: hashedPassword,
             image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
         })
@@ -161,10 +161,10 @@ exports.logout = async (req, res) => {
 exports.sendotp = async (req, res) => {
     try {
         // Get email from the req body
-        const {email} = req.body
+        const {emailAddress} = req.body
 
         // Check - 1 Whether email is already registered or not 
-        const checkUserPresent = await CandidateProfile.findOne({email})
+        const checkUserPresent = await CandidateProfile.findOne({emailAddress})
         // If we have found candidate in DB
         if(checkUserPresent) {
             // Returning 401 unauhorized status code with error message
@@ -190,7 +190,7 @@ exports.sendotp = async (req, res) => {
                 specialChars: false
             })
         }
-        const otpPayload = {email, otp}
+        const otpPayload = {emailAddress, otp}
         console.log("OTP Body: ", await OTP.create(otpPayload))
         res.status(200).json({
             success: true,
