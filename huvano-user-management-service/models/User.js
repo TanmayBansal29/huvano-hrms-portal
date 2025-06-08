@@ -15,7 +15,7 @@ const userSchema = mongoose.Schema({
         maxLength: 50
     },
     empId: {
-        type: true,
+        type: String,
         required: true
     },
     email: {

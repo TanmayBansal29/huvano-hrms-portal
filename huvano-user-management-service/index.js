@@ -12,6 +12,7 @@ app.use(express.json())
 app.use("/api/v1", authRoutes)
 app.use("/api/v1/admin", adminRoutes)
 app.use("/api/v1/hr", hrRoutes)
+
 // Connection to Database
 connectDb().then(() => {
     console.log("Database Connection Successful")
