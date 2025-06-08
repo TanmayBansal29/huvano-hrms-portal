@@ -4,14 +4,14 @@ require("dotenv").config()
 const connectDb = require("./config/db")
 const authRoutes = require("./routes/auth")
 const adminRoutes = require("./routes/admin")
-
+const hrRoutes = require("./routes/hr")
 const PORT = process.env.PORT || 4001
 
 // Middlewares
 app.use(express.json())
 app.use("/api/v1", authRoutes)
 app.use("/api/v1/admin", adminRoutes)
-
+app.use("/api/v1/hr", hrRoutes)
 // Connection to Database
 connectDb().then(() => {
     console.log("Database Connection Successful")
