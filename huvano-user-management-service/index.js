@@ -3,12 +3,14 @@ const app = express()
 require("dotenv").config()
 const connectDb = require("./config/db")
 const authRoutes = require("./routes/auth")
+const adminRoutes = require("./routes/admin")
 
 const PORT = process.env.PORT || 4001
 
 // Middlewares
 app.use(express.json())
 app.use("/api/v1", authRoutes)
+app.use("/api/v1/admin", adminRoutes)
 
 // Connection to Database
 connectDb().then(() => {
