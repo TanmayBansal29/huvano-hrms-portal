@@ -2,9 +2,13 @@ const express = require("express")
 const app = express()
 require("dotenv").config()
 const connectDb = require("./config/db")
-app.use(express.json())
+const authRoutes = require("./routes/auth")
 
 const PORT = process.env.PORT || 4001
+
+// Middlewares
+app.use(express.json())
+app.use("/api/v1", authRoutes)
 
 // Connection to Database
 connectDb().then(() => {
