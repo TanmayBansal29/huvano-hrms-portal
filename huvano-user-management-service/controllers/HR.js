@@ -55,7 +55,37 @@ exports.registerEmployees = async (req, res) => {
         console.log("Error while registering the employee", error)
         return res.status(500).json({
             success: false,
-            message: "Something went wrong Registering the user"
+            message: "Something went wrong registering the user"
+        })
+    }
+}
+
+// Controller for deleting the employee from database
+exports.removeEmployees = async (req, res) => {
+    try {
+        // Getting the empId from req params
+        const empId = req.params.empId
+
+        // Checking whether the employee exists or not
+        const employee = await Employee.findOneAndDelete({empId})
+
+        if(!employee) {
+            return res.status(404).json({
+                success: false,
+                message: "Employee does not exist. Please check the empId"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Employee Removed from database successfully"
+        })
+
+    } catch (error) {
+        console.log("Error while deleting the employee from database")
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong while removing the employee. Please try again"
         })
     }
 }
